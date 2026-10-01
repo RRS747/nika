@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nikateliê — Simulador de Cores 3D</title>
+<meta name="description" content="Veja as peças impressas em 3D da Nikateliê em cada cor de filamento antes de comprar.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --nk-rosa:#E5458C; --nk-rosa-esc:#C42F72; --nk-rosa-claro:#FCE8F1;
+    --nk-tinta:#3A2733; --nk-suave:#86707C; --nk-borda:#F1D6E3;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#fff}
+  body{font-family:'Nunito',system-ui,sans-serif;color:var(--nk-tinta)}
+  button{font-family:inherit}
+  .nk3d{max-width:1000px;margin:0 auto;padding:16px;display:grid;grid-template-columns:1.2fr 1fr;gap:22px;align-items:start}
+  @media (max-width:760px){ .nk3d{grid-template-columns:1fr;padding:12px;gap:16px} }
+
+  .nk-palco{position:relative;border-radius:22px;overflow:hidden;aspect-ratio:1/1;
+    background:radial-gradient(120% 90% at 50% 22%,#fff 0%,#FDF1F6 55%,#F7D9E7 100%);border:1px solid var(--nk-borda)}
+  .nk-palco canvas{display:block;width:100%!important;height:100%!important;touch-action:none;cursor:grab}
+  .nk-palco canvas:active{cursor:grabbing}
+  .nk-selo{position:absolute;left:12px;top:12px;background:var(--nk-rosa);color:#fff;
+    font:600 12px/1 'Fredoka',sans-serif;letter-spacing:.05em;padding:7px 11px;border-radius:999px}
+  .nk-btns{position:absolute;right:12px;top:12px;display:flex;gap:8px}
+  .nk-btns button{border:0;background:rgba(255,255,255,.92);width:38px;height:38px;border-radius:50%;
+    cursor:pointer;display:grid;place-items:center;color:var(--nk-tinta);box-shadow:0 1px 4px rgba(120,40,80,.12)}
+  .nk-btns button[aria-pressed="true"]{background:var(--nk-rosa);color:#fff}
+  .nk-dica{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);background:rgba(255,255,255,.88);
+    border-radius:999px;padding:6px 14px;font-size:12.5px;color:var(--nk-suave);white-space:nowrap;pointer-events:none;transition:opacity .4s}
+  .nk-load{position:absolute;inset:0;display:grid;place-items:center;font-size:14px;color:var(--nk-suave);transition:opacity .3s}
+  .nk-load.oculto{opacity:0;pointer-events:none}
+  .nk-medida{position:absolute;left:12px;top:46px;font-size:11.5px;color:var(--nk-suave);background:rgba(255,255,255,.88);border-radius:8px;padding:4px 8px}
+
+  .nk-painel{display:flex;flex-direction:column;gap:18px}
+  .nk-painel h2{font:600 26px/1.15 'Fredoka',sans-serif;margin:2px 0 0}
+  .nk-sub{margin:5px 0 0;color:var(--nk-suave);font-size:14.5px;line-height:1.45}
+  .nk-rot{font:700 12px/1 'Nunito';letter-spacing:.08em;text-transform:uppercase;color:var(--nk-suave);margin-bottom:9px}
+
+  .nk-chips{display:flex;gap:8px;flex-wrap:wrap}
+  .nk-chips button{border:1.5px solid var(--nk-borda);background:#fff;border-radius:12px;padding:8px 13px;
+    font-weight:600;font-size:14px;color:var(--nk-tinta);cursor:pointer;transition:.15s;display:flex;align-items:center;gap:8px}
+  .nk-chips button:hover{border-color:var(--nk-rosa)}
+  .nk-chips button[aria-pressed="true"]{border-color:var(--nk-rosa);background:var(--nk-rosa-claro);color:var(--nk-rosa-esc)}
+  .nk-chips.modelos button[aria-pressed="true"]{background:var(--nk-rosa);color:#fff}
+  .nk-chips .pt{width:16px;height:16px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);flex:none}
+
+  .nk-abas{display:flex;background:var(--nk-rosa-claro);border-radius:12px;padding:4px;gap:4px}
+  .nk-abas button{flex:1;border:0;background:transparent;border-radius:9px;padding:8px 6px;font-weight:600;font-size:13.5px;color:var(--nk-suave);cursor:pointer}
+  .nk-abas button[aria-selected="true"]{background:#fff;color:var(--nk-rosa-esc);box-shadow:0 1px 3px rgba(197,47,114,.15)}
+  .nk-desc{font-size:13px;color:var(--nk-suave);margin:9px 2px 0;min-height:18px}
+
+  .nk-cores{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:10px;margin-top:12px}
+  .nk-cor{aspect-ratio:1;border-radius:50%;border:0;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.09);transition:transform .12s}
+  .nk-cor:hover{transform:scale(1.08)}
+  .nk-cor[aria-checked="true"]{box-shadow:0 0 0 3px #fff,0 0 0 5px var(--nk-rosa)}
+  .nk-cor.silk{background-image:linear-gradient(135deg,rgba(255,255,255,.55),transparent 45%,rgba(0,0,0,.18))}
+  .nk-cor.transl{background-image:linear-gradient(135deg,rgba(255,255,255,.7),rgba(255,255,255,.15) 50%,rgba(255,255,255,.5))}
+
+  .nk-resumo{background:var(--nk-rosa-claro);border-radius:16px;padding:14px 16px}
+  .nk-resumo .lin{display:flex;align-items:center;gap:10px;font-size:14px;padding:4px 0}
+  .nk-resumo .lin b{font-weight:700;min-width:96px}
+  .nk-resumo .pt{width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1);flex:none}
+  .nk-resumo small{display:block;color:var(--nk-suave);font-size:12.5px;margin-top:8px}
+  .nk-aviso{font-size:12px;color:var(--nk-suave);line-height:1.45;margin:0}
+</style>
+</head>
+<body>
+
+<div class="nk3d">
+  <div class="nk-palco" id="palco">
+    <span class="nk-selo">IMPRESSO EM 3D</span>
+    <div class="nk-btns">
+      <button id="btnGirar" aria-pressed="true" title="Girar automaticamente" aria-label="Girar automaticamente">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
+      </button>
+      <button id="btnCentro" title="Reenquadrar" aria-label="Reenquadrar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5M21 8V3h-5M3 16v5h5M21 16v5h-5"/></svg>
+      </button>
+    </div>
+    <div class="nk-load" id="load">Carregando peça…</div>
+    <div class="nk-medida" id="medida"></div>
+    <div class="nk-dica" id="dica">Arraste para girar · pinça ou roda para zoom</div>
+  </div>
+
+  <div class="nk-painel">
+    <div>
+      <h2 id="titulo">Monte a sua peça</h2>
+      <p class="nk-sub" id="sub"></p>
+    </div>
+
+    <div id="blocoModelos">
+      <div class="nk-rot">Produto</div>
+      <div class="nk-chips modelos" id="modelos"></div>
+    </div>
+
+    <div id="blocoZonas">
+      <div class="nk-rot">Parte da peça</div>
+      <div class="nk-chips" id="zonas"></div>
+    </div>
+
+    <div>
+      <div class="nk-rot" id="rotCor">Cor</div>
+      <div class="nk-abas" role="tablist" id="abas"></div>
+      <p class="nk-desc" id="descAcab"></p>
+      <div class="nk-cores" role="radiogroup" id="cores" aria-label="Cores disponíveis"></div>
+    </div>
+
+    <div class="nk-resumo" id="resumo"></div>
+    <p class="nk-aviso">Cores simuladas — podem variar conforme a tela e o lote do filamento.</p>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+/* =====================================================================
+   CONFIGURAÇÃO — edite só esta parte
+   ---------------------------------------------------------------------
+   Cada produto aponta para um arquivo .glb da pasta /modelos.
+   As "zonas" são as partes da peça que podem ter cores diferentes
+   (o nome antes de "__" em cada parte do .glb).
+   Para mostrar SÓ um produto numa página da loja, use o link com
+   ?produto=ID  (ex.: index.html?produto=caixa-agulhas)
+   ===================================================================== */
+const CONFIG = {
+  produtos: [
+    { id: "caixa-agulhas", nome: "Caixa de Agulhas", arquivo: "modelos/caixa-agulhas.glb",
+      sub: "Caixa com tampa e aplique de máquina de costura. Escolha uma cor para cada parte.",
+      zonas: { Caixa: ["Caixa", "Azul Royal"], Tampa: ["Tampa", "Azul Royal"], Aplique: ["Aplique", "Branco"] } },
+    { id: "suporte-4-prateleiras", nome: "Suporte 4 Prateleiras", arquivo: "modelos/suporte-4-prateleiras.glb",
+      sub: "Expositor em escada para miniaturas, bonecos e esmaltes.",
+      zonas: { Laterais: ["Laterais", "Preto"], Prateleiras: ["Prateleiras", "Branco"] } },
+    { id: "fita-metrica", nome: "Porta Fita Métrica", arquivo: "modelos/fita-metrica.glb",
+      sub: "Estojo vazado que enrola a fita métrica girando o botão.",
+      zonas: { Corpo: ["Corpo", "Verde Menta"], Tampa: ["Tampa", "Branco"] } },
+    { id: "bobinas", nome: "Bobinas", arquivo: "modelos/bobinas.glb",
+      sub: "Bobinas de duas partes — dá para combinar duas cores.",
+      zonas: { Superior: ["Disco de cima", "Rosa Choque"], Inferior: ["Disco de baixo", "Branco"] } },
+  ],
+  acabamentos: {
+    fosco:  { rotulo: "Fosco",         desc: "PLA fosco — toque aveludado, sem brilho." },
+    silk:   { rotulo: "Silk / Brilho", desc: "PLA silk — brilho acetinado, efeito metálico." },
+    transl: { rotulo: "Translúcido",   desc: "PETG translúcido — deixa a luz passar." },
+  },
+  cores: [
+    { nome: "Rosa Choque",   hex: "#E5458C", acab: "fosco" },
+    { nome: "Rosa Bebê",     hex: "#F4B6C9", acab: "fosco" },
+    { nome: "Lilás",         hex: "#B79CE0", acab: "fosco" },
+    { nome: "Azul Bebê",     hex: "#9CCBEB", acab: "fosco" },
+    { nome: "Azul Royal",    hex: "#2F55C4", acab: "fosco" },
+    { nome: "Verde Menta",   hex: "#9EDDC0", acab: "fosco" },
+    { nome: "Verde",         hex: "#2E9E4F", acab: "fosco" },
+    { nome: "Amarelo",       hex: "#F6D13B", acab: "fosco" },
+    { nome: "Laranja",       hex: "#F28C28", acab: "fosco" },
+    { nome: "Vermelho",      hex: "#D23A3A", acab: "fosco" },
+    { nome: "Bege",          hex: "#E3CBA8", acab: "fosco" },
+    { nome: "Branco",        hex: "#F2F0EB", acab: "fosco" },
+    { nome: "Cinza",         hex: "#9A9A9A", acab: "fosco" },
+    { nome: "Preto",         hex: "#2A2A2A", acab: "fosco" },
+    { nome: "Ouro",          hex: "#D4A73A", acab: "silk" },
+    { nome: "Prata",         hex: "#C9CCD1", acab: "silk" },
+    { nome: "Cobre",         hex: "#B8734A", acab: "silk" },
+    { nome: "Rosa Silk",     hex: "#E98BB0", acab: "silk" },
+    { nome: "Azul Silk",     hex: "#4A7FD4", acab: "silk" },
+    { nome: "Cristal",       hex: "#E8F1F5", acab: "transl" },
+    { nome: "Rosa Transl.",  hex: "#F07AAE", acab: "transl" },
+    { nome: "Azul Transl.",  hex: "#5AA9E6", acab: "transl" },
+    { nome: "Verde Transl.", hex: "#6ACF8E", acab: "transl" },
+  ],
+  alturaCamadaMM: 0.2,
+};
+/* ===================================================================== */
+
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
+
+const $ = id => document.getElementById(id);
+const params = new URLSearchParams(location.search);
+const corPorNome = n => CONFIG.cores.find(c => c.nome === n) || CONFIG.cores[0];
+
+/* ---------- cena ---------- */
+const palco = $('palco');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+palco.prepend(renderer.domElement);
+
+const cena = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+cena.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+const luz = new THREE.DirectionalLight(0xffffff, 1.3); luz.position.set(3, 5, 2);
+cena.add(luz, new THREE.HemisphereLight(0xffffff, 0xf3c6da, 0.45));
+
+const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
+const controles = new OrbitControls(camera, renderer.domElement);
+Object.assign(controles, { enableDamping: true, enablePan: false, minDistance: 1.2, maxDistance: 8, autoRotate: true, autoRotateSpeed: 1.4 });
+controles.maxPolarAngle = Math.PI * 0.62;
+
+const sombra = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d'), grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grd.addColorStop(0, 'rgba(120,40,80,.32)'); grd.addColorStop(1, 'rgba(120,40,80,0)');
+  g.fillStyle = grd; g.fillRect(0, 0, 128, 128);
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
+  m.rotation.x = -Math.PI / 2; cena.add(m); return m;
+})();
+
+/* ---------- material de filamento (linhas de camada) ---------- */
+const ACAB = {
+  fosco:  { roughness: 0.75, metalness: 0,    clearcoat: 0,   transmission: 0,    sheen: 0.35 },
+  silk:   { roughness: 0.3,  metalness: 0.45, clearcoat: 0.6, transmission: 0,    sheen: 0 },
+  transl: { roughness: 0.2,  metalness: 0,    clearcoat: 0.3, transmission: 0.7,  sheen: 0, thickness: 3, ior: 1.5 },
+};
+function criarMaterial(eixo) {
+  const m = new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide });
+  const u = { uEixo: { value: eixo }, uFreq: { value: Math.PI * 2 / CONFIG.alturaCamadaMM } };
+  m.onBeforeCompile = sh => {
+    Object.assign(sh.uniforms, u);
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nuniform vec3 uEixo; varying float vAlt; varying vec3 vEixoV;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvAlt = dot(position, uEixo);\nvEixoV = normalize(normalMatrix * uEixo);');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform float uFreq; varying float vAlt; varying vec3 vEixoV;')
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+        float fase = vAlt * uFreq;
+        float nitidez = clamp(1.0 - fwidth(fase) / 2.5, 0.0, 1.0);   // some quando longe (evita moiré)
+        normal = normalize(normal + normalize(vEixoV) * sin(fase) * 0.16 * nitidez);`);
+  };
+  m.customProgramCacheKey = () => 'filamento';
+  return m;
+}
+function pintar(m, cor) {
+  const a = ACAB[cor.acab];
+  m.color.set(cor.hex);
+  Object.assign(m, { roughness: a.roughness, metalness: a.metalness, clearcoat: a.clearcoat, clearcoatRoughness: 0.35,
+    transmission: a.transmission, thickness: a.thickness || 0, ior: a.ior || 1.5, sheen: a.sheen });
+  m.sheenColor.set(cor.hex);
+  m.attenuationColor.set(cor.hex);
+  m.attenuationDistance = a.transmission ? 6 : Infinity;
+}
+
+/* ---------- estado ---------- */
+let produto = null, grupo = null, zonaAtual = null, acabAtual = null;
+const zonas = {};      // nomeZona -> { rotulo, cor, materiais: [] }
+const loader = new GLTFLoader();
+const cacheGLB = {};
+
+function carregarProduto(p) {
+  produto = p;
+  $('sub').textContent = p.sub || '';
+  [...$('modelos').children].forEach(b => b.setAttribute('aria-pressed', b.dataset.id === p.id));
+  $('load').classList.remove('oculto');
+  const usar = gltf => {
+    $('load').classList.add('oculto');
+    montar(gltf.scene.clone(true), p);
+  };
+  if (cacheGLB[p.arquivo]) return usar(cacheGLB[p.arquivo]);
+  loader.load(p.arquivo, g => { cacheGLB[p.arquivo] = g; if (produto === p) usar(g); },
+    undefined, () => { $('load').textContent = 'Não foi possível carregar a peça.'; });
+}
+
+function montar(raiz, p) {
+  if (grupo) cena.remove(grupo);
+  for (const k in zonas) delete zonas[k];
+  raiz.traverse(o => {
+    if (!o.isMesh) return;
+    const [zona, ax] = o.name.split('__');
+    // eixo de impressão da parte: "x" = deitada de lado; padrão = vertical (no .glb, Y para cima)
+    const eixo = ax === 'x' ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
+    o.geometry.deleteAttribute('normal');
+    o.geometry = toCreasedNormals(o.geometry, THREE.MathUtils.degToRad(35));
+    o.material = criarMaterial(eixo);
+    const cfg = p.zonas[zona] || [zona, CONFIG.cores[0].nome];
+    zonas[zona] ??= { rotulo: cfg[0], cor: corPorNome(cfg[1]), materiais: [] };
+    zonas[zona].materiais.push(o.material);
+  });
+  for (const z of Object.values(zonas)) z.materiais.forEach(m => pintar(m, z.cor));
+
+  // enquadrar: maior dimensão = 1.3
+  const caixa = new THREE.Box3().setFromObject(raiz), tam = caixa.getSize(new THREE.Vector3());
+  const esc = 1.3 / Math.max(tam.x, tam.y, tam.z);
+  grupo = new THREE.Group(); grupo.add(raiz); raiz.scale.setScalar(esc);
+  const c = new THREE.Box3().setFromObject(raiz);
+  raiz.position.set(-(c.min.x + c.max.x) / 2, -c.min.y, -(c.min.z + c.max.z) / 2);
+  cena.add(grupo);
+  sombra.scale.setScalar(Math.max(tam.x, tam.z) * esc * 1.7);
+  $('medida').textContent = `${Math.round(tam.x)} × ${Math.round(tam.z)} × ${Math.round(tam.y)} mm`;
+  enquadrar(tam.y * esc);
+
+  // UI de zonas
+  const nomes = Object.keys(zonas);
+  $('blocoZonas').style.display = nomes.length > 1 ? '' : 'none';
+  $('zonas').innerHTML = '';
+  nomes.forEach(n => {
+    const b = document.createElement('button'); b.dataset.z = n;
+    b.innerHTML = `<span class="pt"></span>${zonas[n].rotulo}`;
+    b.onclick = () => selZona(n);
+    $('zonas').append(b);
+  });
+  selZona(nomes[0]);
+}
+
+function enquadrar(alt = 0.6) {
+  controles.target.set(0, alt / 2, 0);
+  camera.position.set(2.3, alt / 2 + 1.45, 3.1);
+  controles.update();
+}
+
+function selZona(n) {
+  zonaAtual = n;
+  [...$('zonas').children].forEach(b => b.setAttribute('aria-pressed', b.dataset.z === n));
+  $('rotCor').textContent = Object.keys(zonas).length > 1 ? `Cor — ${zonas[n].rotulo}` : 'Cor';
+  mostrarAcab(zonas[n].cor.acab);
+  atualizarResumo();
+}
+
+function mostrarAcab(k) {
+  acabAtual = k;
+  [...$('abas').children].forEach(b => b.setAttribute('aria-selected', b.dataset.k === k));
+  $('descAcab').textContent = CONFIG.acabamentos[k].desc;
+  $('cores').innerHTML = '';
+  CONFIG.cores.filter(c => c.acab === k).forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'nk-cor ' + c.acab; b.setAttribute('role', 'radio');
+    b.style.backgroundColor = c.hex; b.title = c.nome; b.setAttribute('aria-label', c.nome);
+    b.setAttribute('aria-checked', zonas[zonaAtual]?.cor === c);
+    b.onclick = () => escolher(c);
+    $('cores').append(b);
+  });
+}
+
+function escolher(c) {
+  const z = zonas[zonaAtual]; z.cor = c;
+  z.materiais.forEach(m => pintar(m, c));
+  [...$('cores').children].forEach(b => b.setAttribute('aria-checked', b.title === c.nome));
+  atualizarResumo();
+}
+
+function atualizarResumo() {
+  [...$('zonas').children].forEach(b => b.querySelector('.pt').style.background = zonas[b.dataset.z].cor.hex);
+  const linhas = Object.values(zonas).map(z =>
+    `<div class="lin"><span class="pt" style="background:${z.cor.hex}"></span><b>${z.rotulo}</b>${z.cor.nome} <span style="color:var(--nk-suave)">· ${CONFIG.acabamentos[z.cor.acab].rotulo}</span></div>`).join('');
+  $('resumo').innerHTML = linhas + '<small>Ao comprar, informe essas cores na variação ou no campo de observações do pedido.</small>';
+  avisarAltura();
+}
+
+/* ---------- montar interface ---------- */
+Object.keys(CONFIG.acabamentos).filter(k => CONFIG.cores.some(c => c.acab === k)).forEach(k => {
+  const b = document.createElement('button'); b.setAttribute('role', 'tab');
+  b.textContent = CONFIG.acabamentos[k].rotulo; b.dataset.k = k;
+  b.onclick = () => mostrarAcab(k);
+  $('abas').append(b);
+});
+
+const fixo = CONFIG.produtos.find(p => p.id === params.get('produto'));
+const lista = fixo ? [fixo] : CONFIG.produtos;
+lista.forEach(p => {
+  const b = document.createElement('button'); b.textContent = p.nome; b.dataset.id = p.id;
+  b.onclick = () => carregarProduto(p);
+  $('modelos').append(b);
+});
+if (lista.length < 2) { $('blocoModelos').style.display = 'none'; $('titulo').textContent = fixo.nome + ' — escolha as cores'; }
+carregarProduto(lista[0]);
+
+$('btnGirar').onclick = () => { controles.autoRotate = !controles.autoRotate; $('btnGirar').setAttribute('aria-pressed', controles.autoRotate); };
+$('btnCentro').onclick = () => grupo && enquadrar(new THREE.Box3().setFromObject(grupo).getSize(new THREE.Vector3()).y);
+controles.addEventListener('start', () => { $('dica').style.opacity = 0; });
+
+/* ---------- tamanho / iframe ---------- */
+function redimensionar() {
+  const w = palco.clientWidth, h = palco.clientHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  avisarAltura();
+}
+function avisarAltura() {   // informa a altura para a página da loja ajustar o iframe
+  if (parent !== window) parent.postMessage({ nikatelie3d: document.documentElement.scrollHeight }, '*');
+}
+new ResizeObserver(redimensionar).observe(palco);
+new ResizeObserver(avisarAltura).observe(document.body);
+redimensionar();
+renderer.setAnimationLoop(() => { controles.update(); renderer.render(cena, camera); });
+</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!--
+  COLE ESTE TRECHO NA DESCRIÇÃO DO PRODUTO (modo HTML / código-fonte do editor)
+  Troque o ?produto=... pelo produto da página:
+    caixa-agulhas | suporte-4-prateleiras | fita-metrica | bobinas
+  Sem o ?produto=..., aparecem todos os produtos com botões para trocar.
+-->
+<div class="nika3d">
+  <iframe src="https://rrs747.github.io/nika/?produto=caixa-agulhas"
+          title="Simulador de cores 3D - Nikateliê" loading="lazy"
+          allow="fullscreen" scrolling="no"></iframe>
+</div>
+<style>
+  .nika3d{width:100%;max-width:1000px;margin:16px auto}
+  .nika3d iframe{width:100%;height:640px;border:0;display:block}
+  @media (max-width:760px){ .nika3d iframe{height:1180px} }
+</style>
+<script>
+  /* ajusta a altura automaticamente (se a loja permitir scripts; senão vale a altura acima) */
+  window.addEventListener('message', function (e) {
+    if (e.data && e.data.nikatelie3d) {
+      document.querySelectorAll('.nika3d iframe').forEach(function (f) {
+        if (f.contentWindow === e.source) f.style.height = e.data.nikatelie3d + 'px';
+      });
+    }
+  });
+</script>
