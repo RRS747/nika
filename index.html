@@ -269,8 +269,14 @@ function carregarProduto(p) {
     montar(gltf.scene.clone(true), p);
   };
   if (cacheGLB[p.arquivo]) return usar(cacheGLB[p.arquivo]);
-  loader.load(p.arquivo, g => { cacheGLB[p.arquivo] = g; if (produto === p) usar(g); },
-    undefined, () => { $('load').textContent = 'Não foi possível carregar a peça.'; });
+  const ok = g => { cacheGLB[p.arquivo] = g; if (produto === p) usar(g); };
+  const erro = () => { $('load').textContent = 'Não foi possível carregar a peça.'; };
+  if (p.arquivo.startsWith('data:')) {          // modelo embutido na página
+    const bin = atob(p.arquivo.slice(p.arquivo.indexOf(',') + 1));
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    loader.parse(buf.buffer, '', ok, erro);
+  } else loader.load(p.arquivo, ok, undefined, erro);
 }
 
 function montar(raiz, p) {
