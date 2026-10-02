@@ -165,8 +165,8 @@ const CONFIG = {
     premium: { rotulo: "Premium", desc: "PLA High Speed Premium (cores sólidas) — acabamento liso com leve brilho." },
     velvet: { rotulo: "Velvet", desc: "PLA Velvet — fosco aveludado, esconde as linhas de camada. Inclui tons pastel Macaron." },
     silk: { rotulo: "V-Silk", desc: "PLA V-Silk — brilho acetinado com efeito metálico." },
-    duo: { rotulo: "Duo Shadow", desc: "PLA Duo Color Shadow (V-Silk) — duas cores no mesmo fio: muda de cor conforme o lado e o ângulo." },
-    tri: { rotulo: "Tri Color", desc: "PLA Tri Color (V-Silk) — três cores no mesmo fio: cada lado da peça mostra um tom." },
+    duo: { rotulo: "Duo Shadow", desc: "PLA Duo Color Shadow (V-Silk) — 70% cor principal e 30% escura: a segunda cor aparece como sombra nas curvas e muda com o ângulo." },
+    tri: { rotulo: "Tri Color", desc: "PLA Tri Color (V-Silk) — três cores que giram no fio: a peça muda de cor conforme o ângulo de visão e a luz." },
   },
   cores: [
     { nome: "Branco Dental", hex: "#F4F4F0", acab: "premium" },
@@ -196,7 +196,7 @@ const CONFIG = {
     { nome: "Azul Safira com Ametista", hex: "#1F4FA8", acab: "duo", multi: ["#1F4FA8", "#8E5BB5"] },
     { nome: "Vermelho com Preto", hex: "#C21E2A", acab: "duo", multi: ["#C21E2A", "#2A2A2A"] },
     { nome: "Laranja com Preto", hex: "#F07A1E", acab: "duo", multi: ["#F07A1E", "#2A2A2A"] },
-    { nome: "Rosa com Preto", hex: "#EE8FB8", acab: "duo", multi: ["#EE8FB8", "#2A2A2A"] },
+    { nome: "Rosa com Preto", hex: "#E8559A", acab: "duo", multi: ["#E8559A", "#2A2A2A"] },
     { nome: "Dourado com Preto", hex: "#D4A93C", acab: "duo", multi: ["#D4A93C", "#2A2A2A"] },
     { nome: "Azul com Preto", hex: "#2F6DB5", acab: "duo", multi: ["#2F6DB5", "#2A2A2A"] },
     { nome: "Dourado com Ametista", hex: "#D4A93C", acab: "duo", multi: ["#D4A93C", "#8E5BB5"] },
@@ -283,25 +283,24 @@ function criarMaterial(eixo) {
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvAlt = dot(position, uEixo);\nvEixoV = normalize(normalMatrix * uEixo);\nvNObj = normal; vPObj = position;');
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\nuniform float uFreq; uniform float uAmp; varying float vAlt; varying vec3 vEixoV;\nuniform int uN; uniform vec3 uC0; uniform vec3 uC1; uniform vec3 uC2; uniform vec3 uCentro; varying vec3 vNObj; varying vec3 vPObj;')
-      .replace('#include <color_fragment>', `#include <color_fragment>
-        // filamento coextrudado (Duo/Tri): a cor muda conforme o lado da peça
-        if (uN > 1) {
-          vec2 d = normalize(vNObj).xz;
-          if (length(d) < 0.4) d = vPObj.xz - uCentro.xz;          // topo e fundo: usa a posição
-          float a = atan(d.y, d.x);
-          vec3 c;
-          if (uN == 2) {
-            c = mix(uC0, uC1, smoothstep(-0.45, 0.45, sin(a + 0.6)));
-          } else {
-            float w0 = pow(max(0.0, cos(a)), 2.0), w1 = pow(max(0.0, cos(a - 2.0944)), 2.0), w2 = pow(max(0.0, cos(a + 2.0944)), 2.0);
-            c = (uC0 * w0 + uC1 * w1 + uC2 * w2) / (w0 + w1 + w2 + 1e-4);
-          }
-          diffuseColor.rgb = c;
-        }`)
+
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
         float fase = vAlt * uFreq;
         float nitidez = clamp(1.0 - fwidth(fase) / 2.5, 0.0, 1.0);   // some quando longe (evita moiré)
-        normal = normalize(normal + normalize(vEixoV) * sin(fase) * uAmp * nitidez);`);
+        normal = normalize(normal + normalize(vEixoV) * sin(fase) * uAmp * nitidez);
+        // filamentos multicoloridos: a cor depende do ângulo de visão (muda ao girar a peça)
+        if (uN == 2) {
+          // Duo Color Shadow: 70% cor principal + 30% escura — a escura vira sombra nas curvas e bordas
+          float frente = abs(normal.z);
+          float sombra = 1.0 - smoothstep(0.2, 0.85, frente);
+          sombra = clamp(sombra * 0.85 + 0.12 * sin(vAlt * 0.09 + normal.x * 2.0), 0.0, 1.0);
+          diffuseColor.rgb = mix(uC0, uC1, sombra);
+        } else if (uN == 3) {
+          // Tri Color: as 3 cores giram no fio — cada ângulo de visão revela um tom
+          float t = clamp(normal.x * 0.75 + 0.5 + 0.28 * sin(vAlt * 0.08 + normal.y * 1.5), 0.0, 1.0);
+          vec3 c = t < 0.5 ? mix(uC0, uC1, smoothstep(0.12, 0.45, t)) : mix(uC1, uC2, smoothstep(0.55, 0.88, t));
+          diffuseColor.rgb = c;
+        }`);
   };
   m.customProgramCacheKey = () => 'filamento';
   return m;
