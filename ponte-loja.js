@@ -63,10 +63,35 @@
     }
     return '';
   }
+  // Loja Integrada: o código (SKU) de cada variação fica em .acoes-produto[data-variacao-id] (classe "SKU-...").
+  // Ex.: produto 88888, variação "88888-Rosa-com-Preto" → nome da cor "Rosa com Preto".
+  function skuDe(id) {
+    var bloco = id && document.querySelector('.acoes-produto[data-variacao-id="' + id + '"]');
+    if (!bloco) return '';
+    var meta = bloco.querySelector('meta[itemprop="sku"]');
+    var m = (bloco.className || '').match(/(?:^|\s)SKU-(\S+)/);
+    return limpo(meta ? meta.getAttribute('content') : (m ? m[1] : ''));
+  }
+  function skuBase() {
+    var b = document.querySelector('.acoes-produto[data-variacao-id=""]');
+    var m = b && (b.className || '').match(/(?:^|\s)SKU-(\S+)/);
+    var s = document.querySelector('.codigo-produto [itemprop="sku"]');
+    return limpo(m ? m[1] : (s ? s.textContent : ''));
+  }
+  function nomeDoSku(sku) {
+    if (!sku) return '';
+    var base = skuBase();
+    if (base && sku.toLowerCase().indexOf(base.toLowerCase()) === 0) sku = sku.slice(base.length);
+    return limpo(sku.replace(/^[\s\-_./]+/, '').replace(/[-_]+/g, ' '));
+  }
   function item(el) {
     var op = el.tagName === 'SELECT' ? el.options[el.selectedIndex] : opcaoDe(el);
     var v = textoOpcao(op);
-    return v ? { grupo: grupoDe(op || el), valor: v, hex: hexDe(op) } : null;
+    if (!v) return null;
+    var id = op && op.getAttribute && op.getAttribute('data-variacao-id');
+    var doSku = nomeDoSku(skuDe(id));
+    // o nome vindo do código da variação tem prioridade sobre o nome padrão da cor ("Cerise")
+    return { grupo: grupoDe(op || el), valor: doSku || v, hex: hexDe(op), nomeLoja: v };
   }
 
   // opções marcadas; se um grupo não tiver nada marcado, usa a 1ª opção dele (cor inicial do modelo)
