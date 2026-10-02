@@ -472,16 +472,16 @@ controles.addEventListener('start', () => { $('dica').style.opacity = 0; });
 
 /* ---------- variação escolhida na loja → cor no modelo ---------- */
 // a página do produto (ponte-loja.js) envia {nika3d:'variacao', opcoes:[{grupo, valor}]}
-const LINHA_PALAVRAS = { velvet: ['velvet', 'fosco', 'matte'], silk: ['silk', 'v silk', 'seda', 'metalico'], premium: ['premium', 'solida', 'solido', 'brilho'] };
+const LINHA_PALAVRAS = { duo: ['duo', 'shadow'], tri: ['tri color', 'tricolor', 'tri'], velvet: ['velvet', 'fosco', 'matte'], silk: ['silk', 'v silk', 'seda', 'metalico'], premium: ['premium', 'solida', 'solido'] };
 
 function corDoTexto(valor) {
   const v = sem(valor);
   const linha = Object.keys(LINHA_PALAVRAS).find(k => LINHA_PALAVRAS[k].some(p => contem(v, p)));
-  const achadas = CONFIG.cores.filter(c => contem(v, sem(c.nome)));
+  let achadas = CONFIG.cores.filter(c => contem(v, sem(c.nome)));
+  if (linha) achadas = achadas.filter(c => c.acab === linha);          // linha no nome manda: sem cor dessa linha → usa o hex
   if (!achadas.length) return null;
   const tam = Math.max(...achadas.map(c => sem(c.nome).length));      // nome mais específico ("Rosa Bebê" > "Rosa")
-  const melhores = achadas.filter(c => sem(c.nome).length === tam);
-  return melhores.find(c => c.acab === linha) || melhores[0];
+  return achadas.find(c => sem(c.nome).length === tam);
 }
 function zonaDoTexto(txt) {
   const t = sem(txt);
