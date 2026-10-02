@@ -59,7 +59,8 @@
   .nk-cor:hover{transform:scale(1.08)}
   .nk-cor[aria-checked="true"]{box-shadow:0 0 0 3px #fff,0 0 0 5px var(--nk-rosa)}
   .nk-cor.silk{background-image:linear-gradient(135deg,rgba(255,255,255,.55),transparent 45%,rgba(0,0,0,.18))}
-  .nk-cor.transl{background-image:linear-gradient(135deg,rgba(255,255,255,.7),rgba(255,255,255,.15) 50%,rgba(255,255,255,.5))}
+  .nk-cor.premium{background-image:linear-gradient(135deg,rgba(255,255,255,.28),transparent 40%)}
+  .nk-cor.stone{background-image:radial-gradient(rgba(0,0,0,.18) 1px,transparent 1.5px),radial-gradient(rgba(255,255,255,.35) 1px,transparent 1.5px);background-size:7px 7px,9px 9px;background-position:0 0,3px 4px}
 
   .nk-resumo{background:var(--nk-rosa-claro);border-radius:16px;padding:14px 16px}
   .nk-resumo .lin{display:flex;align-items:center;gap:10px;font-size:14px;padding:4px 0}
@@ -127,6 +128,7 @@
    CONFIGURAÇÃO — edite só esta parte
    ---------------------------------------------------------------------
    Cada produto aponta para um arquivo .glb da pasta /modelos.
+   Cor inicial de cada parte: "linha:Nome" (ex.: "velvet:Azul").
    As "zonas" são as partes da peça que podem ter cores diferentes
    (o nome antes de "__" em cada parte do .glb).
    Para mostrar SÓ um produto numa página da loja, use o link com
@@ -136,46 +138,99 @@ const CONFIG = {
   produtos: [
     { id: "caixa-agulhas", nome: "Caixa de Agulhas", arquivo: "modelos/caixa-agulhas.glb",
       sub: "Caixa com tampa e aplique de máquina de costura. Escolha uma cor para cada parte.",
-      zonas: { Caixa: ["Caixa", "Azul Royal"], Tampa: ["Tampa", "Azul Royal"], Aplique: ["Aplique", "Branco"] } },
+      zonas: { Caixa: ["Caixa", "velvet:Azul"], Tampa: ["Tampa", "velvet:Azul"], Aplique: ["Aplique", "premium:Branco Dental"] } },
     { id: "suporte-4-prateleiras", nome: "Suporte 4 Prateleiras", arquivo: "modelos/suporte-4-prateleiras.glb",
       sub: "Expositor em escada para miniaturas, bonecos e esmaltes.",
-      zonas: { Laterais: ["Laterais", "Preto"], Prateleiras: ["Prateleiras", "Branco"] } },
+      zonas: { Laterais: ["Laterais", "velvet:Preto"], Prateleiras: ["Prateleiras", "premium:Branco Dental"] } },
     { id: "fita-metrica", nome: "Porta Fita Métrica", arquivo: "modelos/fita-metrica.glb",
       sub: "Estojo vazado que enrola a fita métrica girando o botão.",
-      zonas: { Corpo: ["Corpo", "Verde Menta"], Tampa: ["Tampa", "Branco"] } },
+      zonas: { Corpo: ["Corpo", "velvet:Verde Macaron"], Tampa: ["Tampa", "velvet:Branco"] } },
     { id: "bobinas", nome: "Bobinas", arquivo: "modelos/bobinas.glb",
       sub: "Bobinas de duas partes — dá para combinar duas cores.",
-      zonas: { Superior: ["Disco de cima", "Rosa Choque"], Inferior: ["Disco de baixo", "Branco"] } },
+      zonas: { Superior: ["Disco de cima", "silk:Rosa Choque"], Inferior: ["Disco de baixo", "premium:Branco Dental"] } },
   ],
+  // Catálogo PLA Voolt3D (voolt3d.com.br/pla). Cores em hex são aproximações — ajuste olhando o carretel.
   acabamentos: {
-    fosco:  { rotulo: "Fosco",         desc: "PLA fosco — toque aveludado, sem brilho." },
-    silk:   { rotulo: "Silk / Brilho", desc: "PLA silk — brilho acetinado, efeito metálico." },
-    transl: { rotulo: "Translúcido",   desc: "PETG translúcido — deixa a luz passar." },
+    premium: { rotulo: "Premium", desc: "PLA High Speed Premium (cores sólidas) — acabamento liso com leve brilho." },
+    velvet: { rotulo: "Velvet", desc: "PLA Velvet — fosco aveludado, esconde as linhas de camada. Inclui os tons pastel Macaron." },
+    silk: { rotulo: "V-Silk", desc: "PLA V-Silk — brilho acetinado com efeito metálico. Inclui os tons Neon." },
+    stone: { rotulo: "Stone/Wood", desc: "PLA Stone (aspecto de pedra) e Wood (com partículas de madeira) — fosco e texturizado." },
   },
   cores: [
-    { nome: "Rosa Choque",   hex: "#E5458C", acab: "fosco" },
-    { nome: "Rosa Bebê",     hex: "#F4B6C9", acab: "fosco" },
-    { nome: "Lilás",         hex: "#B79CE0", acab: "fosco" },
-    { nome: "Azul Bebê",     hex: "#9CCBEB", acab: "fosco" },
-    { nome: "Azul Royal",    hex: "#2F55C4", acab: "fosco" },
-    { nome: "Verde Menta",   hex: "#9EDDC0", acab: "fosco" },
-    { nome: "Verde",         hex: "#2E9E4F", acab: "fosco" },
-    { nome: "Amarelo",       hex: "#F6D13B", acab: "fosco" },
-    { nome: "Laranja",       hex: "#F28C28", acab: "fosco" },
-    { nome: "Vermelho",      hex: "#D23A3A", acab: "fosco" },
-    { nome: "Bege",          hex: "#E3CBA8", acab: "fosco" },
-    { nome: "Branco",        hex: "#F2F0EB", acab: "fosco" },
-    { nome: "Cinza",         hex: "#9A9A9A", acab: "fosco" },
-    { nome: "Preto",         hex: "#2A2A2A", acab: "fosco" },
-    { nome: "Ouro",          hex: "#D4A73A", acab: "silk" },
-    { nome: "Prata",         hex: "#C9CCD1", acab: "silk" },
-    { nome: "Cobre",         hex: "#B8734A", acab: "silk" },
-    { nome: "Rosa Silk",     hex: "#E98BB0", acab: "silk" },
-    { nome: "Azul Silk",     hex: "#4A7FD4", acab: "silk" },
-    { nome: "Cristal",       hex: "#E8F1F5", acab: "transl" },
-    { nome: "Rosa Transl.",  hex: "#F07AAE", acab: "transl" },
-    { nome: "Azul Transl.",  hex: "#5AA9E6", acab: "transl" },
-    { nome: "Verde Transl.", hex: "#6ACF8E", acab: "transl" },
+    { nome: "Branco Dental", hex: "#F4F4F0", acab: "premium" },
+    { nome: "Preto", hex: "#1E1E1E", acab: "premium" },
+    { nome: "Cinza Claro", hex: "#BDBDBD", acab: "premium" },
+    { nome: "Cinza Grafite", hex: "#4A4D52", acab: "premium" },
+    { nome: "Vermelho", hex: "#C8102E", acab: "premium" },
+    { nome: "Vermelho Marsala", hex: "#7E2635", acab: "premium" },
+    { nome: "Laranja", hex: "#F26A1B", acab: "premium" },
+    { nome: "Amarelo", hex: "#F7C600", acab: "premium" },
+    { nome: "Rosa", hex: "#F06BA8", acab: "premium" },
+    { nome: "Rosa Bebê", hex: "#F6C1D3", acab: "premium" },
+    { nome: "Rosa Púrpura", hex: "#C2187A", acab: "premium" },
+    { nome: "Roxo", hex: "#6A3AA2", acab: "premium" },
+    { nome: "Azul", hex: "#1F4FB5", acab: "premium" },
+    { nome: "Azul Cyan", hex: "#00A6D6", acab: "premium" },
+    { nome: "Verde Tiffany", hex: "#81D8D0", acab: "premium" },
+    { nome: "Verde", hex: "#1E9E4A", acab: "premium" },
+    { nome: "Bege Caucasiano", hex: "#E8C9A8", acab: "premium" },
+    { nome: "Marrom Caramelo", hex: "#B5713A", acab: "premium" },
+    { nome: "Marrom Cappuccino", hex: "#8A6A52", acab: "premium" },
+    { nome: "Marrom", hex: "#6B4226", acab: "premium" },
+    { nome: "Branco", hex: "#F2F2EE", acab: "velvet" },
+    { nome: "Branco Off White", hex: "#EEE8DA", acab: "velvet" },
+    { nome: "Preto", hex: "#232323", acab: "velvet" },
+    { nome: "Grafeno", hex: "#2B2D30", acab: "velvet" },
+    { nome: "Cinza Claro", hex: "#BEBEBE", acab: "velvet" },
+    { nome: "Cinza Grafite", hex: "#4B4E53", acab: "velvet" },
+    { nome: "Vermelho", hex: "#B5202E", acab: "velvet" },
+    { nome: "Rosa Bebê", hex: "#F3BFD0", acab: "velvet" },
+    { nome: "Amarelo", hex: "#F2C230", acab: "velvet" },
+    { nome: "Azul", hex: "#2A55B0", acab: "velvet" },
+    { nome: "Verde", hex: "#2E8B57", acab: "velvet" },
+    { nome: "Verde Oliva", hex: "#6B7B3A", acab: "velvet" },
+    { nome: "Bege Caucasiano", hex: "#E5C7A6", acab: "velvet" },
+    { nome: "Marrom Cappuccino", hex: "#8B6B55", acab: "velvet" },
+    { nome: "Marrom", hex: "#6A4430", acab: "velvet" },
+    { nome: "Lilás Macaron", hex: "#C9B3E6", acab: "velvet" },
+    { nome: "Azul Macaron", hex: "#A9CDEB", acab: "velvet" },
+    { nome: "Verde Macaron", hex: "#B5E3C4", acab: "velvet" },
+    { nome: "Laranja Macaron", hex: "#F8C49A", acab: "velvet" },
+    { nome: "Amarelo Macaron", hex: "#F8E7A0", acab: "velvet" },
+    { nome: "Dourado", hex: "#D4A93C", acab: "silk" },
+    { nome: "Dourado Ultra", hex: "#E8B000", acab: "silk" },
+    { nome: "Champagne", hex: "#E6D2A8", acab: "silk" },
+    { nome: "Rose Gold", hex: "#D8A08F", acab: "silk" },
+    { nome: "Bronze", hex: "#A5703A", acab: "silk" },
+    { nome: "Cobre", hex: "#B5653C", acab: "silk" },
+    { nome: "Inox", hex: "#B9BEC4", acab: "silk" },
+    { nome: "Alumínio", hex: "#C8CCD0", acab: "silk" },
+    { nome: "Branco Pérola", hex: "#EFEDE6", acab: "silk" },
+    { nome: "Preto", hex: "#2A2A2A", acab: "silk" },
+    { nome: "Vermelho", hex: "#C21E2A", acab: "silk" },
+    { nome: "Laranja", hex: "#F07A1E", acab: "silk" },
+    { nome: "Amarelo", hex: "#F3CB2A", acab: "silk" },
+    { nome: "Rosa Choque", hex: "#E5368A", acab: "silk" },
+    { nome: "Rosa", hex: "#EE8FB8", acab: "silk" },
+    { nome: "Rosa Ametista", hex: "#B5578F", acab: "silk" },
+    { nome: "Rosa Salmão Neon", hex: "#FF7F79", acab: "silk" },
+    { nome: "Lilás", hex: "#B79CDB", acab: "silk" },
+    { nome: "Azul Safira", hex: "#1F4FA8", acab: "silk" },
+    { nome: "Azul Metalizado", hex: "#2F6DB5", acab: "silk" },
+    { nome: "Azul Titanium", hex: "#4E6A8C", acab: "silk" },
+    { nome: "Azul Sky", hex: "#5DB3E8", acab: "silk" },
+    { nome: "Azul Bebê", hex: "#A8D2F0", acab: "silk" },
+    { nome: "Verde", hex: "#2E9E5B", acab: "silk" },
+    { nome: "Verde Bebê", hex: "#B3E2C2", acab: "silk" },
+    { nome: "Verde Neon", hex: "#7CE03A", acab: "silk" },
+    { nome: "Gesso", hex: "#ECEBE6", acab: "stone" },
+    { nome: "Crema Marfil", hex: "#E9DDC6", acab: "stone" },
+    { nome: "Marmorizado", hex: "#DCDAD6", acab: "stone" },
+    { nome: "Verde Ardósia", hex: "#5E6E62", acab: "stone" },
+    { nome: "Grafite", hex: "#55585C", acab: "stone" },
+    { nome: "Pinus Wood", hex: "#D9B98A", acab: "stone" },
+    { nome: "Tabaco Wood", hex: "#8A5A35", acab: "stone" },
+    { nome: "Carvão Wood", hex: "#3B3330", acab: "stone" },
   ],
   alturaCamadaMM: 0.2,
 };
@@ -189,7 +244,10 @@ import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
-const corPorNome = n => CONFIG.cores.find(c => c.nome === n) || CONFIG.cores[0];
+const corPorNome = ref => {
+  const [l, n] = ref.includes(':') ? ref.split(':') : [null, ref];
+  return CONFIG.cores.find(c => c.nome === n && (!l || c.acab === l)) || CONFIG.cores[0];
+};
 
 /* ---------- cena ---------- */
 const palco = $('palco');
@@ -221,9 +279,10 @@ const sombra = (() => {
 
 /* ---------- material de filamento (linhas de camada) ---------- */
 const ACAB = {
-  fosco:  { roughness: 0.75, metalness: 0,    clearcoat: 0,   transmission: 0,    sheen: 0.35 },
-  silk:   { roughness: 0.3,  metalness: 0.45, clearcoat: 0.6, transmission: 0,    sheen: 0 },
-  transl: { roughness: 0.2,  metalness: 0,    clearcoat: 0.3, transmission: 0.7,  sheen: 0, thickness: 3, ior: 1.5 },
+  premium: { roughness: 0.42, metalness: 0,    clearcoat: 0.25, transmission: 0, sheen: 0 },
+  velvet:  { roughness: 0.88, metalness: 0,    clearcoat: 0,    transmission: 0, sheen: 0.55 },
+  silk:    { roughness: 0.28, metalness: 0.45, clearcoat: 0.6,  transmission: 0, sheen: 0 },
+  stone:   { roughness: 0.95, metalness: 0,    clearcoat: 0,    transmission: 0, sheen: 0.2 },
 };
 function criarMaterial(eixo) {
   const m = new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide });
