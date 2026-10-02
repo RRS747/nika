@@ -260,7 +260,7 @@ function pintar(m, cor) {
 }
 
 /* ---------- estado ---------- */
-let produto = null, grupo = null, zonaAtual = null, acabAtual = null;
+let produto = null, grupo = null, zonaAtual = null, acabAtual = null, variacaoPendente = null;
 const zonas = {};      // nomeZona -> { rotulo, cor, materiais: [] }
 const loader = new GLTFLoader();
 const cacheGLB = {};
@@ -324,6 +324,8 @@ function montar(raiz, p) {
     $('zonas').append(b);
   });
   selZona(nomes[0]);
+  if (variacaoPendente) { const v = variacaoPendente; variacaoPendente = null; aplicarVariacoes(v); }
+  if (parent !== window) parent.postMessage({ nika3dPronto: true }, '*');
 }
 
 function enquadrar(alt = 0.6) {
@@ -391,6 +393,41 @@ carregarProduto(lista[0]);
 $('btnGirar').onclick = () => { controles.autoRotate = !controles.autoRotate; $('btnGirar').setAttribute('aria-pressed', controles.autoRotate); };
 $('btnCentro').onclick = () => grupo && enquadrar(new THREE.Box3().setFromObject(grupo).getSize(new THREE.Vector3()).y);
 controles.addEventListener('start', () => { $('dica').style.opacity = 0; });
+
+/* ---------- variação escolhida na loja → cor no modelo ---------- */
+// a página do produto (ponte-loja.js) envia {nika3d:'variacao', opcoes:[{grupo, valor}]}
+const sem = t => (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+const contem = (txt, termo) => (' ' + txt + ' ').includes(' ' + termo + ' ');
+const LINHA_PALAVRAS = { velvet: ['velvet', 'fosco', 'matte'], silk: ['silk', 'v silk', 'seda', 'metalico'], premium: ['premium', 'solida', 'solido', 'brilho'] };
+
+function corDoTexto(valor) {
+  const v = sem(valor);
+  const linha = Object.keys(LINHA_PALAVRAS).find(k => LINHA_PALAVRAS[k].some(p => contem(v, p)));
+  const achadas = CONFIG.cores.filter(c => contem(v, sem(c.nome)));
+  if (!achadas.length) return null;
+  const tam = Math.max(...achadas.map(c => sem(c.nome).length));      // nome mais específico ("Rosa Bebê" > "Rosa")
+  const melhores = achadas.filter(c => sem(c.nome).length === tam);
+  return melhores.find(c => c.acab === linha) || melhores[0];
+}
+function zonaDoTexto(txt) {
+  const t = sem(txt);
+  return Object.keys(zonas).find(z => contem(t, sem(zonas[z].rotulo)) || contem(t, sem(z))) || null;
+}
+function aplicarVariacoes(opcoes) {
+  if (!Object.keys(zonas).length) { variacaoPendente = opcoes; return; }
+  let ultima = null;
+  for (const { grupo, valor } of opcoes) {
+    const cor = corDoTexto(valor); if (!cor) continue;
+    const z = zonaDoTexto(grupo) || zonaDoTexto(valor);
+    const alvo = z ? [z] : Object.keys(zonas);                        // grupo "Cor" sem parte = peça inteira
+    alvo.forEach(n => { zonas[n].cor = cor; zonas[n].materiais.forEach(m => pintar(m, cor)); });
+    ultima = alvo[0];
+  }
+  if (ultima) selZona(ultima);
+}
+window.addEventListener('message', e => {
+  if (e.data && e.data.nika3d === 'variacao' && Array.isArray(e.data.opcoes)) aplicarVariacoes(e.data.opcoes);
+});
 
 /* ---------- tamanho / iframe ---------- */
 function redimensionar() {

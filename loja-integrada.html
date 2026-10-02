@@ -1,26 +1,42 @@
 <!--
-  COLE ESTE TRECHO NA DESCRIÇÃO DO PRODUTO (modo HTML / código-fonte do editor)
-  Troque o ?produto=... pelo produto da página:
+  =====================================================================
+  PASSO 1 — UMA VEZ SÓ: códigos personalizados da loja (rodapé / antes do </body>)
+  Faz o modelo 3D trocar de cor quando o cliente escolhe a variação do produto.
+  Só age nas páginas que tiverem o simulador.
+  =====================================================================
+-->
+<script src="https://rrs747.github.io/nika/ponte-loja.js" defer></script>
+
+
+<!--
+  =====================================================================
+  PASSO 2 — EM CADA PRODUTO 3D: descrição do produto (modo HTML / código-fonte)
+  Troque o ?produto=... pela peça da página:
     caixa-agulhas | suporte-4-prateleiras | fita-metrica | bobinas
-  Sem o ?produto=..., aparecem todos os produtos com botões para trocar.
+  =====================================================================
 -->
 <div class="nika3d">
   <iframe src="https://rrs747.github.io/nika/?produto=caixa-agulhas"
-          title="Simulador de cores 3D - Nikateliê" loading="lazy"
-          allow="fullscreen" scrolling="no"></iframe>
+          title="Simulador de cores 3D - Nikateliê" loading="lazy" scrolling="no"></iframe>
 </div>
 <style>
   .nika3d{width:100%;max-width:1000px;margin:16px auto}
   .nika3d iframe{width:100%;height:640px;border:0;display:block}
   @media (max-width:760px){ .nika3d iframe{height:1180px} }
 </style>
-<script>
-  /* ajusta a altura automaticamente (se a loja permitir scripts; senão vale a altura acima) */
-  window.addEventListener('message', function (e) {
-    if (e.data && e.data.nikatelie3d) {
-      document.querySelectorAll('.nika3d iframe').forEach(function (f) {
-        if (f.contentWindow === e.source) f.style.height = e.data.nikatelie3d + 'px';
-      });
-    }
-  });
-</script>
+
+
+<!--
+  =====================================================================
+  COMO NOMEAR AS VARIAÇÕES NO PRODUTO
+  - Valor da variação = nome da cor como está no simulador, de preferência com a linha:
+      "Azul", "Rosa Bebê Velvet", "Dourado Silk", "Branco Dental"
+    (sem a linha, vale a primeira cor com esse nome: Premium > Velvet > V-Silk)
+  - Peça de uma cor só: grupo "Cor" → pinta a peça inteira.
+  - Peça com partes: coloque o nome da parte no grupo:
+      Caixa de Agulhas ......... "Cor da Caixa", "Cor da Tampa", "Cor do Aplique"
+      Suporte 4 Prateleiras .... "Cor das Laterais", "Cor das Prateleiras"
+      Porta Fita Métrica ....... "Cor do Corpo", "Cor da Tampa"
+      Bobinas .................. "Cor do Disco de cima", "Cor do Disco de baixo"
+  =====================================================================
+-->

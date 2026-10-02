@@ -15,9 +15,12 @@ Visualizador 3D das peças impressas da [Nikateliê](https://www.nikatlie.com.br
 
 ## Como usar na Loja Integrada
 
-1. Abra o produto → Descrição → botão de código-fonte (`<>`/HTML).
-2. Cole o conteúdo de [`loja-integrada.html`](loja-integrada.html) e troque o `?produto=` pelo ID da peça.
-3. Salve e confira a página do produto.
+1. **Uma vez só** — nos códigos personalizados da loja (rodapé), cole:
+   `<script src="https://rrs747.github.io/nika/ponte-loja.js" defer></script>`
+   Isso faz o modelo trocar de cor quando o cliente escolhe a variação do produto.
+2. **Em cada produto 3D** — na descrição (modo HTML), cole o iframe de [`loja-integrada.html`](loja-integrada.html) com o `?produto=` da peça.
+3. **Variações** — use o nome da cor do simulador no valor (ex.: `Rosa Bebê Velvet`, `Dourado Silk`).
+   Para peças com partes, ponha a parte no nome do grupo (ex.: `Cor da Tampa`); um grupo só `Cor` pinta a peça inteira.
 
 ## Como editar cores e produtos
 
