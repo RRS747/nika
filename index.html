@@ -165,6 +165,8 @@ const CONFIG = {
     premium: { rotulo: "Premium", desc: "PLA High Speed Premium (cores sólidas) — acabamento liso com leve brilho." },
     velvet: { rotulo: "Velvet", desc: "PLA Velvet — fosco aveludado, esconde as linhas de camada. Inclui tons pastel Macaron." },
     silk: { rotulo: "V-Silk", desc: "PLA V-Silk — brilho acetinado com efeito metálico." },
+    duo: { rotulo: "Duo Shadow", desc: "PLA Duo Color Shadow (V-Silk) — duas cores no mesmo fio: muda de cor conforme o lado e o ângulo." },
+    tri: { rotulo: "Tri Color", desc: "PLA Tri Color (V-Silk) — três cores no mesmo fio: cada lado da peça mostra um tom." },
   },
   cores: [
     { nome: "Branco Dental", hex: "#F4F4F0", acab: "premium" },
@@ -191,6 +193,22 @@ const CONFIG = {
     { nome: "Rosa Choque", hex: "#E5368A", acab: "silk" },
     { nome: "Azul Safira", hex: "#1F4FA8", acab: "silk" },
     { nome: "Verde", hex: "#2E9E5B", acab: "silk" },
+    { nome: "Azul Safira com Ametista", hex: "#1F4FA8", acab: "duo", multi: ["#1F4FA8", "#8E5BB5"] },
+    { nome: "Vermelho com Preto", hex: "#C21E2A", acab: "duo", multi: ["#C21E2A", "#2A2A2A"] },
+    { nome: "Laranja com Preto", hex: "#F07A1E", acab: "duo", multi: ["#F07A1E", "#2A2A2A"] },
+    { nome: "Rosa com Preto", hex: "#EE8FB8", acab: "duo", multi: ["#EE8FB8", "#2A2A2A"] },
+    { nome: "Dourado com Preto", hex: "#D4A93C", acab: "duo", multi: ["#D4A93C", "#2A2A2A"] },
+    { nome: "Azul com Preto", hex: "#2F6DB5", acab: "duo", multi: ["#2F6DB5", "#2A2A2A"] },
+    { nome: "Dourado com Ametista", hex: "#D4A93C", acab: "duo", multi: ["#D4A93C", "#8E5BB5"] },
+    { nome: "Verde com Preto", hex: "#2E9E5B", acab: "duo", multi: ["#2E9E5B", "#2A2A2A"] },
+    { nome: "Verde com Ametista", hex: "#2E9E5B", acab: "duo", multi: ["#2E9E5B", "#8E5BB5"] },
+    { nome: "Dourado com Verde", hex: "#D4A93C", acab: "duo", multi: ["#D4A93C", "#2E9E5B"] },
+    { nome: "Dourado / Rosa Choque / Verde", hex: "#D4A93C", acab: "tri", multi: ["#D4A93C", "#E5368A", "#2E9E5B"] },
+    { nome: "Dourado / Laranja / Rosa Choque", hex: "#D4A93C", acab: "tri", multi: ["#D4A93C", "#F07A1E", "#E5368A"] },
+    { nome: "Bronze / Prata / Ouro", hex: "#A5703A", acab: "tri", multi: ["#A5703A", "#C9CCD1", "#E0B43A"] },
+    { nome: "Ametista / Azul Safira / Dourado", hex: "#8E5BB5", acab: "tri", multi: ["#8E5BB5", "#1F4FA8", "#D4A93C"] },
+    { nome: "Azul / Laranja / Verde Neon", hex: "#2F6DB5", acab: "tri", multi: ["#2F6DB5", "#F07A1E", "#7CE03A"] },
+    { nome: "Azul Safira / Dourado / Verde", hex: "#1F4FA8", acab: "tri", multi: ["#1F4FA8", "#D4A93C", "#2E9E5B"] },
   ],
   alturaCamadaMM: 0.2,
 };
@@ -245,21 +263,41 @@ const sombra = (() => {
 //  velvet : fosco aveludado — sem reflexo, brilho "de veludo" nas bordas, esconde as camadas
 //  silk   : V-Silk — brilho perolado/metálico forte, reflexo que muda de tom, realça as camadas
 const ACAB = {
+  // duo / tri: V-Silk coextrudado (2 ou 3 cores no mesmo fio)
   premium: { roughness: 0.38, metalness: 0,    clearcoat: 0.3, clearcoatRoughness: 0.3,  sheen: 0,   iridescence: 0,    camadas: 0.16 },
   velvet:  { roughness: 0.92, metalness: 0,    clearcoat: 0,   clearcoatRoughness: 1,    sheen: 0.5, sheenRoughness: 0.6,  iridescence: 0, camadas: 0.05 },
   silk:    { roughness: 0.24, metalness: 0.3,  clearcoat: 1,   clearcoatRoughness: 0.06, sheen: 0,   iridescence: 0.3,  iridescenceIOR: 1.5, camadas: 0.24 },
+  duo:     { roughness: 0.24, metalness: 0.3,  clearcoat: 1,   clearcoatRoughness: 0.06, sheen: 0,   iridescence: 0.3,  iridescenceIOR: 1.5, camadas: 0.24 },
+  tri:     { roughness: 0.24, metalness: 0.3,  clearcoat: 1,   clearcoatRoughness: 0.06, sheen: 0,   iridescence: 0.3,  iridescenceIOR: 1.5, camadas: 0.24 },
 };
 function criarMaterial(eixo) {
   const m = new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide });
-  const u = { uEixo: { value: eixo }, uFreq: { value: Math.PI * 2 / CONFIG.alturaCamadaMM }, uAmp: { value: 0.16 } };
+  const u = { uEixo: { value: eixo }, uFreq: { value: Math.PI * 2 / CONFIG.alturaCamadaMM }, uAmp: { value: 0.16 },
+    uN: { value: 1 }, uC0: { value: new THREE.Color() }, uC1: { value: new THREE.Color() }, uC2: { value: new THREE.Color() },
+    uCentro: { value: new THREE.Vector3() } };
   m.userData.u = u;
   m.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, u);
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nuniform vec3 uEixo; varying float vAlt; varying vec3 vEixoV;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvAlt = dot(position, uEixo);\nvEixoV = normalize(normalMatrix * uEixo);');
+      .replace('#include <common>', '#include <common>\nuniform vec3 uEixo; varying float vAlt; varying vec3 vEixoV; varying vec3 vNObj; varying vec3 vPObj;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvAlt = dot(position, uEixo);\nvEixoV = normalize(normalMatrix * uEixo);\nvNObj = normal; vPObj = position;');
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform float uFreq; uniform float uAmp; varying float vAlt; varying vec3 vEixoV;')
+      .replace('#include <common>', '#include <common>\nuniform float uFreq; uniform float uAmp; varying float vAlt; varying vec3 vEixoV;\nuniform int uN; uniform vec3 uC0; uniform vec3 uC1; uniform vec3 uC2; uniform vec3 uCentro; varying vec3 vNObj; varying vec3 vPObj;')
+      .replace('#include <color_fragment>', `#include <color_fragment>
+        // filamento coextrudado (Duo/Tri): a cor muda conforme o lado da peça
+        if (uN > 1) {
+          vec2 d = normalize(vNObj).xz;
+          if (length(d) < 0.4) d = vPObj.xz - uCentro.xz;          // topo e fundo: usa a posição
+          float a = atan(d.y, d.x);
+          vec3 c;
+          if (uN == 2) {
+            c = mix(uC0, uC1, smoothstep(-0.45, 0.45, sin(a + 0.6)));
+          } else {
+            float w0 = pow(max(0.0, cos(a)), 2.0), w1 = pow(max(0.0, cos(a - 2.0944)), 2.0), w2 = pow(max(0.0, cos(a + 2.0944)), 2.0);
+            c = (uC0 * w0 + uC1 * w1 + uC2 * w2) / (w0 + w1 + w2 + 1e-4);
+          }
+          diffuseColor.rgb = c;
+        }`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
         float fase = vAlt * uFreq;
         float nitidez = clamp(1.0 - fwidth(fase) / 2.5, 0.0, 1.0);   // some quando longe (evita moiré)
@@ -279,6 +317,10 @@ function pintar(m, cor) {
   m.sheenColor.copy(base).lerp(new THREE.Color('#ffffff'), 0.12);
   m.specularColor.copy(cor.acab === 'silk' ? base.clone().lerp(new THREE.Color('#ffffff'), 0.5) : new THREE.Color('#ffffff'));
   m.userData.u.uAmp.value = a.camadas;
+  const multi = cor.multi || [];
+  m.userData.u.uN.value = multi.length > 1 ? multi.length : 1;
+  multi.forEach((h, i) => m.userData.u['uC' + i].value.set(h));
+  if (multi.length > 1) { m.sheenColor.set('#ffffff'); m.specularColor.set('#ffffff'); }
   m.needsUpdate = true;
 }
 
@@ -319,6 +361,7 @@ function montar(raiz, p) {
     o.geometry.deleteAttribute('normal');
     o.geometry = toCreasedNormals(o.geometry, THREE.MathUtils.degToRad(35));
     o.material = criarMaterial(eixo);
+    o.geometry.computeBoundingBox(); o.geometry.boundingBox.getCenter(o.material.userData.u.uCentro.value);
     const cfg = p.zonas[zona] || [zona, CONFIG.cores[0].nome];
     const chave = cfg[0];                       // partes com o mesmo rótulo = uma cor só
     zonas[chave] ??= { rotulo: cfg[0], cor: corPorNome(cfg[1]), materiais: [] };
@@ -381,7 +424,8 @@ function mostrarAcab(k) {
   CONFIG.cores.filter(c => c.acab === k).forEach(c => {
     const b = document.createElement('button');
     b.className = 'nk-cor ' + c.acab; b.setAttribute('role', 'radio');
-    b.style.backgroundColor = c.hex; b.title = c.nome; b.setAttribute('aria-label', c.nome);
+    b.style.backgroundColor = c.hex; b.title = c.nome;
+    if (c.multi) b.style.backgroundImage = `conic-gradient(${c.multi.map((h, i) => `${h} ${i * 360 / c.multi.length}deg ${(i + 1) * 360 / c.multi.length}deg`).join(',')})`; b.setAttribute('aria-label', c.nome);
     b.setAttribute('aria-checked', zonas[zonaAtual]?.cor === c);
     b.onclick = () => escolher(c);
     $('cores').append(b);
@@ -398,10 +442,10 @@ function escolher(c) {
 function atualizarResumo() {
   [...$('zonas').children].forEach(b => b.querySelector('.pt').style.background = zonas[b.dataset.z].cor.hex);
   const linhas = Object.values(zonas).map(z =>
-    `<div class="lin"><span class="pt" style="background:${z.cor.hex}"></span><b>${z.rotulo}</b>${z.cor.nome} <span style="color:var(--nk-suave)">· ${CONFIG.acabamentos[z.cor.acab].rotulo}</span></div>`).join('');
+    `<div class="lin"><span class="pt" style="background:${z.cor.multi ? 'conic-gradient(' + z.cor.multi.join(',') + ')' : z.cor.hex}"></span><b>${z.rotulo}</b>${z.cor.nome} <span style="color:var(--nk-suave)">· ${CONFIG.acabamentos[z.cor.acab].rotulo}</span></div>`).join('');
   $('resumo').innerHTML = linhas + '<small>Ao comprar, informe essas cores na variação ou no campo de observações do pedido.</small>';
   const varias = Object.keys(zonas).length > 1;
-  $('tag').innerHTML = Object.values(zonas).map(z => `<span><i style="background:${z.cor.hex}"></i>${varias ? z.rotulo + ': ' : ''}${z.cor.nome}${sem(z.cor.nome).includes(sem(CONFIG.acabamentos[z.cor.acab].rotulo)) ? '' : ' · ' + CONFIG.acabamentos[z.cor.acab].rotulo}</span>`).join('');
+  $('tag').innerHTML = Object.values(zonas).map(z => `<span><i style="background:${z.cor.multi ? 'conic-gradient(' + z.cor.multi.join(',') + ')' : z.cor.hex}"></i>${varias ? z.rotulo + ': ' : ''}${z.cor.nome}${sem(z.cor.nome).includes(sem(CONFIG.acabamentos[z.cor.acab].rotulo)) ? '' : ' · ' + CONFIG.acabamentos[z.cor.acab].rotulo}</span>`).join('');
   avisarAltura();
 }
 
@@ -453,7 +497,7 @@ function aplicarVariacoes(opcoes) {
     const linha = Object.keys(LINHA_PALAVRAS).find(k => LINHA_PALAVRAS[k].some(p => contem(sem(valor), p)));
     if (!daPaleta && !hex) continue;
     // nome da tabela (ex.: "Rosa Bebê Velvet") → cor e efeito da linha; senão, a cor cadastrada na loja
-    const cor = daPaleta ? { nome: valor, hex: daPaleta.hex, acab: daPaleta.acab }
+    const cor = daPaleta ? { nome: valor, hex: daPaleta.hex, acab: daPaleta.acab, multi: daPaleta.multi }
                          : { nome: valor, hex, acab: linha || 'premium' };
     const z = zonaDoTexto(grupo) || zonaDoTexto(valor);
     const alvo = z ? [z] : Object.keys(zonas);                        // grupo "Cor" sem parte = peça inteira
