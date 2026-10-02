@@ -324,7 +324,7 @@ function montar(raiz, p) {
   cena.add(grupo);
   sombra.scale.setScalar(Math.max(tam.x, tam.z) * esc * 1.7);
   $('medida').textContent = `${Math.round(tam.x)} × ${Math.round(tam.z)} × ${Math.round(tam.y)} mm`;
-  enquadrar(tam.y * esc);
+  enquadrar();
 
   // UI de zonas
   const nomes = Object.keys(zonas);
@@ -342,10 +342,15 @@ function montar(raiz, p) {
   if (parent !== window) parent.postMessage({ nika3dPronto: true }, '*');
 }
 
-function enquadrar(alt = 0.6) {
-  controles.target.set(0, alt / 2, 0);
-  const k = document.body.classList.contains('modo-loja') ? 0.8 : 1;   // mais perto no espaço da foto
-  camera.position.set(2.3 * k, alt / 2 + 1.45 * k, 3.1 * k);
+function enquadrar() {
+  // enquadra pela esfera que envolve a peça: cabe inteira em qualquer formato de peça
+  if (!grupo) return;
+  const caixa = new THREE.Box3().setFromObject(grupo), centro = caixa.getCenter(new THREE.Vector3());
+  const raio = caixa.getSize(new THREE.Vector3()).length() / 2;
+  const fov = THREE.MathUtils.degToRad(camera.fov), ajuste = Math.min(1, camera.aspect);
+  const dist = raio / Math.sin(fov / 2) / ajuste * 1.12;
+  controles.target.copy(centro);
+  camera.position.copy(centro).add(new THREE.Vector3(2.3, 1.6, 3.1).normalize().multiplyScalar(dist));
   controles.update();
 }
 
@@ -408,7 +413,7 @@ if (lista.length < 2) { $('blocoModelos').style.display = 'none'; $('titulo').te
 carregarProduto(lista[0]);
 
 $('btnGirar').onclick = () => { controles.autoRotate = !controles.autoRotate; $('btnGirar').setAttribute('aria-pressed', controles.autoRotate); };
-$('btnCentro').onclick = () => grupo && enquadrar(new THREE.Box3().setFromObject(grupo).getSize(new THREE.Vector3()).y);
+$('btnCentro').onclick = () => enquadrar();
 controles.addEventListener('start', () => { $('dica').style.opacity = 0; });
 
 /* ---------- variação escolhida na loja → cor no modelo ---------- */
@@ -450,7 +455,7 @@ function modoLoja() {
   if (document.body.classList.contains('modo-loja')) return;
   document.body.classList.add('modo-loja');
   redimensionar();
-  if (grupo) enquadrar(new THREE.Box3().setFromObject(grupo).getSize(new THREE.Vector3()).y);
+  enquadrar();
 }
 if (params.get('modo') === 'loja') modoLoja();
 window.addEventListener('message', e => {
