@@ -26,7 +26,7 @@ Visualizador 3D das peças impressas da [Nikateliê](https://www.nikatelie.com.b
 
 ## Nome personalizado
 
-O cliente digita o nome na página do produto (campo criado pelo script) e vê o nome aplicado na peça.
+Desligado por padrão. Para uma peça com nome, use `<div class="nika3d" data-nome="sim">` (ou `"obrigatorio"`) na descrição do produto. O cliente digita o nome na página do produto e vê o nome aplicado na peça.
 Ao clicar em Comprar, o nome fica guardado no navegador; o carrinho mostra um quadro com "Copiar personalização"
 para colar no campo **Comentário** do checkout (Configurações > Gerais > Checkout). A Loja Integrada não permite
 código no checkout, por isso o preenchimento não é automático. Posição do nome em cada peça: `personalizar` no `CONFIG`

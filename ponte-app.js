@@ -175,6 +175,8 @@
   function gravarLista(l) { try { localStorage.setItem(CHAVE, JSON.stringify(l)); } catch (e) {} }
   function campoNome() { return document.getElementById('nika3d-nome'); }
   function obrigatorio() { var c = document.querySelector('.nika3d'); return c && c.getAttribute('data-nome') === 'obrigatorio'; }
+  // só mostra o campo de nome nas peças marcadas como "com nome": <div class="nika3d" data-nome="sim"> (ou "obrigatorio")
+  function comNome() { var c = document.querySelector('.nika3d'); var v = c && (c.getAttribute('data-nome') || '').toLowerCase(); return v === 'sim' || v === 'obrigatorio'; }
 
   function criarCampoNome() {
     if (campoNome()) return;
@@ -253,7 +255,7 @@
   window.addEventListener('message', function (e) {
     if (e.origin !== ORIGEM || !e.data) return;
     if (e.data.nika3dPronto) {
-      if (e.data.personalizar) criarCampoNome();
+      if (e.data.personalizar && comNome()) criarCampoNome();
       if (campoNome() && campoNome().value) iframes().forEach(function (f) { enviarPara(f, { nika3d: 'nome', texto: campoNome().value }); });
       iframes().forEach(function (f) { if (f.contentWindow === e.source) enviarPara(f, { nika3d: 'modo', modo: 'loja' }); });
       enviar(selecionadas());

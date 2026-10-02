@@ -15,7 +15,11 @@
   Troque o ?produto=... pela peça da página:
     caixa-agulhas | suporte-4-prateleiras | suporte-3-prateleiras | fita-metrica | bobinas | porta-canetinhas-80
   (para deixar o simulador completo na descrição, acrescente data-posicao="descricao" na div)
-  (para exigir o nome antes de comprar, acrescente data-nome="obrigatorio" na div)
+  PEÇA COM NOME (opcional): por padrão a peça NÃO tem nome. Para ativar numa peça, acrescente na div:
+    data-nome="sim"          → mostra o campo "Nome para personalizar" (opcional para o cliente)
+    data-nome="obrigatorio"  → mostra o campo e exige o nome antes de comprar
+  Ex.: <div class="nika3d" data-nome="sim"><iframe ...></iframe></div>
+  (Bobinas não aceitam nome — o disco é pequeno demais.)
   =====================================================================
 -->
 <div class="nika3d"><iframe src="https://rrs747.github.io/nika/?produto=bobinas" title="Simulador 3D" scrolling="no" style="width:100%;aspect-ratio:1/1;border:0"></iframe></div>

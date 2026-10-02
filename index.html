@@ -466,7 +466,7 @@ function montar(raiz, p) {
   });
   selZona(nomes[0]);
   if (variacaoPendente) { const v = variacaoPendente; variacaoPendente = null; aplicarVariacoes(v); }
-  $('blocoNome').style.display = p.personalizar ? '' : 'none';
+  $('blocoNome').style.display = p.personalizar && params.get('nome') ? '' : 'none';   // campo de nome só com ?nome=sim
   if (nomeAtual) aplicarNome(nomeAtual);
   if (parent !== window) parent.postMessage({ nika3dPronto: true, personalizar: !!p.personalizar }, '*');
 }
