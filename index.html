@@ -66,6 +66,16 @@
   .nk-resumo .lin b{font-weight:700;min-width:96px}
   .nk-resumo .pt{width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1);flex:none}
   .nk-resumo small{display:block;color:var(--nk-suave);font-size:12.5px;margin-top:8px}
+  /* modo loja: só o modelo, a cor vem da variação da página do produto */
+  .nk-tag{display:none;position:absolute;left:10px;bottom:10px;right:10px;flex-wrap:wrap;gap:6px;pointer-events:none}
+  .nk-tag span{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.92);border-radius:999px;padding:5px 10px 5px 6px;font-size:12.5px;font-weight:600;color:var(--nk-tinta);box-shadow:0 1px 4px rgba(120,40,80,.12)}
+  .nk-tag i{width:14px;height:14px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+  body.modo-loja .nk3d{display:block;max-width:none;padding:0}
+  body.modo-loja .nk-painel,body.modo-loja .nk-dica,body.modo-loja #btnCentro{display:none}
+  body.modo-loja .nk-palco{border-radius:10px;border:0}
+  body.modo-loja .nk-tag{display:flex}
+  body.modo-loja .nk-selo{font-size:10.5px;padding:6px 9px}
+  body.modo-loja .nk-medida{top:40px;font-size:10.5px}
   .nk-aviso{font-size:12px;color:var(--nk-suave);line-height:1.45;margin:0}
 </style>
 </head>
@@ -84,6 +94,7 @@
     </div>
     <div class="nk-load" id="load">Carregando peça…</div>
     <div class="nk-medida" id="medida"></div>
+    <div class="nk-tag" id="tag"></div>
     <div class="nk-dica" id="dica">Arraste para girar · pinça ou roda para zoom</div>
   </div>
 
@@ -333,7 +344,8 @@ function montar(raiz, p) {
 
 function enquadrar(alt = 0.6) {
   controles.target.set(0, alt / 2, 0);
-  camera.position.set(2.3, alt / 2 + 1.45, 3.1);
+  const k = document.body.classList.contains('modo-loja') ? 0.8 : 1;   // mais perto no espaço da foto
+  camera.position.set(2.3 * k, alt / 2 + 1.45 * k, 3.1 * k);
   controles.update();
 }
 
@@ -372,6 +384,8 @@ function atualizarResumo() {
   const linhas = Object.values(zonas).map(z =>
     `<div class="lin"><span class="pt" style="background:${z.cor.hex}"></span><b>${z.rotulo}</b>${z.cor.nome} <span style="color:var(--nk-suave)">· ${CONFIG.acabamentos[z.cor.acab].rotulo}</span></div>`).join('');
   $('resumo').innerHTML = linhas + '<small>Ao comprar, informe essas cores na variação ou no campo de observações do pedido.</small>';
+  const varias = Object.keys(zonas).length > 1;
+  $('tag').innerHTML = Object.values(zonas).map(z => `<span><i style="background:${z.cor.hex}"></i>${varias ? z.rotulo + ': ' : ''}${z.cor.nome}</span>`).join('');
   avisarAltura();
 }
 
@@ -419,8 +433,12 @@ function zonaDoTexto(txt) {
 function aplicarVariacoes(opcoes) {
   if (!Object.keys(zonas).length) { variacaoPendente = opcoes; return; }
   let ultima = null;
-  for (const { grupo, valor } of opcoes) {
-    const cor = corDoTexto(valor); if (!cor) continue;
+  for (const { grupo, valor, hex } of opcoes) {
+    // cor da paleta (pelo nome) e/ou a cor exata cadastrada na variação da loja (hex)
+    const daPaleta = corDoTexto(valor);
+    const linha = Object.keys(LINHA_PALAVRAS).find(k => LINHA_PALAVRAS[k].some(p => contem(sem(valor), p)));
+    if (!daPaleta && !hex) continue;
+    const cor = hex ? { nome: valor, hex, acab: daPaleta?.acab || linha || 'premium' } : daPaleta;
     const z = zonaDoTexto(grupo) || zonaDoTexto(valor);
     const alvo = z ? [z] : Object.keys(zonas);                        // grupo "Cor" sem parte = peça inteira
     alvo.forEach(n => { zonas[n].cor = cor; zonas[n].materiais.forEach(m => pintar(m, cor)); });
@@ -428,8 +446,17 @@ function aplicarVariacoes(opcoes) {
   }
   if (ultima) selZona(ultima);
 }
+function modoLoja() {
+  if (document.body.classList.contains('modo-loja')) return;
+  document.body.classList.add('modo-loja');
+  redimensionar();
+  if (grupo) enquadrar(new THREE.Box3().setFromObject(grupo).getSize(new THREE.Vector3()).y);
+}
+if (params.get('modo') === 'loja') modoLoja();
 window.addEventListener('message', e => {
-  if (e.data && e.data.nika3d === 'variacao' && Array.isArray(e.data.opcoes)) aplicarVariacoes(e.data.opcoes);
+  if (!e.data) return;
+  if (e.data.nika3d === 'modo' && e.data.modo === 'loja') modoLoja();
+  if (e.data.nika3d === 'variacao' && Array.isArray(e.data.opcoes)) aplicarVariacoes(e.data.opcoes);
 });
 
 /* ---------- tamanho / iframe ---------- */
