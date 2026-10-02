@@ -12,6 +12,8 @@ Visualizador 3D das peças impressas da [Nikateliê](https://www.nikatelie.com.b
 | `suporte-4-prateleiras` | Suporte 4 Prateleiras   | Laterais, Prateleiras    |
 | `fita-metrica`          | Porta Fita Métrica      | uma cor só               |
 | `bobinas`               | Bobinas                 | uma cor só               |
+| `suporte-3-prateleiras` | Suporte 3 Prateleiras   | Laterais, Prateleiras    |
+| `porta-canetinhas-80`   | Porta Canetinhas 80     | uma cor só               |
 
 ## Como usar na Loja Integrada
 
