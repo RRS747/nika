@@ -11,27 +11,20 @@
 <!--
   =====================================================================
   PASSO 2 — EM CADA PRODUTO 3D: descrição do produto (modo HTML / código-fonte)
+  O script do passo 1 leva o modelo para o lugar da foto do produto.
   Troque o ?produto=... pela peça da página:
     caixa-agulhas | suporte-4-prateleiras | fita-metrica | bobinas
+  (para deixar o simulador completo na descrição, acrescente data-posicao="descricao" na div)
   =====================================================================
 -->
-<div class="nika3d">
-  <iframe src="https://rrs747.github.io/nika/?produto=caixa-agulhas"
-          title="Simulador de cores 3D - Nikateliê" loading="lazy" scrolling="no"></iframe>
-</div>
-<style>
-  .nika3d{width:100%;max-width:1000px;margin:16px auto}
-  .nika3d iframe{width:100%;height:640px;border:0;display:block}
-  @media (max-width:760px){ .nika3d iframe{height:1180px} }
-</style>
+<div class="nika3d"><iframe src="https://rrs747.github.io/nika/?produto=bobinas" title="Simulador 3D" scrolling="no" style="width:100%;aspect-ratio:1/1;border:0"></iframe></div>
 
 
 <!--
   =====================================================================
   COMO NOMEAR AS VARIAÇÕES NO PRODUTO
-  - Valor da variação = nome da cor como está no simulador, de preferência com a linha:
-      "Azul", "Rosa Bebê Velvet", "Dourado Silk", "Branco Dental"
-    (sem a linha, vale a primeira cor com esse nome: Premium > Velvet > V-Silk)
+  - O modelo usa a cor cadastrada em cada variação (o quadradinho de cor da Loja Integrada)
+    e mostra o nome dela (ex.: "Brilliant Rose"). Sem nada marcado, mostra a 1ª opção.
   - Peça de uma cor só: grupo "Cor" → pinta a peça inteira.
   - Peça com partes: coloque o nome da parte no grupo:
       Caixa de Agulhas ......... "Cor da Caixa", "Cor da Tampa", "Cor do Aplique"
