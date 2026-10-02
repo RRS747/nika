@@ -60,7 +60,6 @@
   .nk-cor[aria-checked="true"]{box-shadow:0 0 0 3px #fff,0 0 0 5px var(--nk-rosa)}
   .nk-cor.silk{background-image:linear-gradient(135deg,rgba(255,255,255,.55),transparent 45%,rgba(0,0,0,.18))}
   .nk-cor.premium{background-image:linear-gradient(135deg,rgba(255,255,255,.28),transparent 40%)}
-  .nk-cor.stone{background-image:radial-gradient(rgba(0,0,0,.18) 1px,transparent 1.5px),radial-gradient(rgba(255,255,255,.35) 1px,transparent 1.5px);background-size:7px 7px,9px 9px;background-position:0 0,3px 4px}
 
   .nk-resumo{background:var(--nk-rosa-claro);border-radius:16px;padding:14px 16px}
   .nk-resumo .lin{display:flex;align-items:center;gap:10px;font-size:14px;padding:4px 0}
@@ -154,7 +153,6 @@ const CONFIG = {
     premium: { rotulo: "Premium", desc: "PLA High Speed Premium (cores sólidas) — acabamento liso com leve brilho." },
     velvet: { rotulo: "Velvet", desc: "PLA Velvet — fosco aveludado, esconde as linhas de camada. Inclui os tons pastel Macaron." },
     silk: { rotulo: "V-Silk", desc: "PLA V-Silk — brilho acetinado com efeito metálico. Inclui os tons Neon." },
-    stone: { rotulo: "Stone/Wood", desc: "PLA Stone (aspecto de pedra) e Wood (com partículas de madeira) — fosco e texturizado." },
   },
   cores: [
     { nome: "Branco Dental", hex: "#F4F4F0", acab: "premium" },
@@ -223,14 +221,6 @@ const CONFIG = {
     { nome: "Verde", hex: "#2E9E5B", acab: "silk" },
     { nome: "Verde Bebê", hex: "#B3E2C2", acab: "silk" },
     { nome: "Verde Neon", hex: "#7CE03A", acab: "silk" },
-    { nome: "Gesso", hex: "#ECEBE6", acab: "stone" },
-    { nome: "Crema Marfil", hex: "#E9DDC6", acab: "stone" },
-    { nome: "Marmorizado", hex: "#DCDAD6", acab: "stone" },
-    { nome: "Verde Ardósia", hex: "#5E6E62", acab: "stone" },
-    { nome: "Grafite", hex: "#55585C", acab: "stone" },
-    { nome: "Pinus Wood", hex: "#D9B98A", acab: "stone" },
-    { nome: "Tabaco Wood", hex: "#8A5A35", acab: "stone" },
-    { nome: "Carvão Wood", hex: "#3B3330", acab: "stone" },
   ],
   alturaCamadaMM: 0.2,
 };
@@ -282,7 +272,6 @@ const ACAB = {
   premium: { roughness: 0.42, metalness: 0,    clearcoat: 0.25, transmission: 0, sheen: 0 },
   velvet:  { roughness: 0.88, metalness: 0,    clearcoat: 0,    transmission: 0, sheen: 0.55 },
   silk:    { roughness: 0.28, metalness: 0.45, clearcoat: 0.6,  transmission: 0, sheen: 0 },
-  stone:   { roughness: 0.95, metalness: 0,    clearcoat: 0,    transmission: 0, sheen: 0.2 },
 };
 function criarMaterial(eixo) {
   const m = new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide });

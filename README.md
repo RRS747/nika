@@ -1,6 +1,6 @@
 # Nikateliê — Simulador de Cores 3D
 
-Visualizador 3D das peças impressas da [Nikateliê](https://www.nikatlie.com.br): o cliente gira a peça e escolhe a cor de cada parte (PLA Voolt3D: Premium, Velvet, V-Silk, Stone e Wood).
+Visualizador 3D das peças impressas da [Nikateliê](https://www.nikatlie.com.br): o cliente gira a peça e escolhe a cor de cada parte (PLA Voolt3D: Premium, Velvet e V-Silk).
 
 **Site:** https://rrs747.github.io/nika/
 
@@ -22,7 +22,7 @@ Visualizador 3D das peças impressas da [Nikateliê](https://www.nikatlie.com.br
 ## Como editar cores e produtos
 
 Tudo fica no bloco `CONFIG` no início do `<script type="module">` do `index.html`:
-- `cores`: catálogo PLA da [Voolt3D](https://voolt3d.com.br/pla/) — linhas `premium`, `velvet`, `silk` (V-Silk) e `stone` (Stone e Wood). Os códigos hex são aproximados; ajuste e apague as cores que não tiver em estoque.
+- `cores`: catálogo PLA da [Voolt3D](https://voolt3d.com.br/pla/) — linhas `premium`, `velvet` e `silk` (V-Silk). Os códigos hex são aproximados; ajuste e apague as cores que não tiver em estoque.
 - `produtos`: nome, arquivo `.glb`, texto e a cor inicial de cada parte.
 
 ## Como adicionar um modelo novo
