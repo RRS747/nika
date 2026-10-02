@@ -204,6 +204,8 @@ import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
+const sem = t => (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+const contem = (txt, termo) => (' ' + txt + ' ').includes(' ' + termo + ' ');
 const corPorNome = ref => {
   const [l, n] = ref.includes(':') ? ref.split(':') : [null, ref];
   return CONFIG.cores.find(c => c.nome === n && (!l || c.acab === l)) || CONFIG.cores[0];
@@ -238,37 +240,46 @@ const sombra = (() => {
 })();
 
 /* ---------- material de filamento (linhas de camada) ---------- */
+// efeito de cada linha de filamento
+//  premium: PLA comum — liso, brilho leve, linhas de camada visíveis
+//  velvet : fosco aveludado — sem reflexo, brilho "de veludo" nas bordas, esconde as camadas
+//  silk   : V-Silk — brilho perolado/metálico forte, reflexo que muda de tom, realça as camadas
 const ACAB = {
-  premium: { roughness: 0.42, metalness: 0,    clearcoat: 0.25, transmission: 0, sheen: 0 },
-  velvet:  { roughness: 0.88, metalness: 0,    clearcoat: 0,    transmission: 0, sheen: 0.55 },
-  silk:    { roughness: 0.28, metalness: 0.45, clearcoat: 0.6,  transmission: 0, sheen: 0 },
+  premium: { roughness: 0.38, metalness: 0,    clearcoat: 0.3, clearcoatRoughness: 0.3,  sheen: 0,   iridescence: 0,    camadas: 0.16 },
+  velvet:  { roughness: 0.92, metalness: 0,    clearcoat: 0,   clearcoatRoughness: 1,    sheen: 0.5, sheenRoughness: 0.6,  iridescence: 0, camadas: 0.05 },
+  silk:    { roughness: 0.24, metalness: 0.3,  clearcoat: 1,   clearcoatRoughness: 0.06, sheen: 0,   iridescence: 0.3,  iridescenceIOR: 1.5, camadas: 0.24 },
 };
 function criarMaterial(eixo) {
   const m = new THREE.MeshPhysicalMaterial({ side: THREE.DoubleSide });
-  const u = { uEixo: { value: eixo }, uFreq: { value: Math.PI * 2 / CONFIG.alturaCamadaMM } };
+  const u = { uEixo: { value: eixo }, uFreq: { value: Math.PI * 2 / CONFIG.alturaCamadaMM }, uAmp: { value: 0.16 } };
+  m.userData.u = u;
   m.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, u);
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', '#include <common>\nuniform vec3 uEixo; varying float vAlt; varying vec3 vEixoV;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvAlt = dot(position, uEixo);\nvEixoV = normalize(normalMatrix * uEixo);');
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform float uFreq; varying float vAlt; varying vec3 vEixoV;')
+      .replace('#include <common>', '#include <common>\nuniform float uFreq; uniform float uAmp; varying float vAlt; varying vec3 vEixoV;')
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
         float fase = vAlt * uFreq;
         float nitidez = clamp(1.0 - fwidth(fase) / 2.5, 0.0, 1.0);   // some quando longe (evita moiré)
-        normal = normalize(normal + normalize(vEixoV) * sin(fase) * 0.16 * nitidez);`);
+        normal = normalize(normal + normalize(vEixoV) * sin(fase) * uAmp * nitidez);`);
   };
   m.customProgramCacheKey = () => 'filamento';
   return m;
 }
 function pintar(m, cor) {
-  const a = ACAB[cor.acab];
-  m.color.set(cor.hex);
-  Object.assign(m, { roughness: a.roughness, metalness: a.metalness, clearcoat: a.clearcoat, clearcoatRoughness: 0.35,
-    transmission: a.transmission, thickness: a.thickness || 0, ior: a.ior || 1.5, sheen: a.sheen });
-  m.sheenColor.set(cor.hex);
-  m.attenuationColor.set(cor.hex);
-  m.attenuationDistance = a.transmission ? 6 : Infinity;
+  const a = ACAB[cor.acab] || ACAB.premium;
+  const base = new THREE.Color(cor.hex);
+  m.color.copy(base);
+  Object.assign(m, { roughness: a.roughness, metalness: a.metalness, clearcoat: a.clearcoat, clearcoatRoughness: a.clearcoatRoughness,
+    sheen: a.sheen, sheenRoughness: a.sheenRoughness ?? 0.5, iridescence: a.iridescence, iridescenceIOR: a.iridescenceIOR ?? 1.3,
+    transmission: 0, specularIntensity: cor.acab === 'velvet' ? 0.25 : 1 });
+  // veludo: brilho das bordas um pouco mais claro que a cor; silk: reflexo puxado para a própria cor
+  m.sheenColor.copy(base).lerp(new THREE.Color('#ffffff'), 0.12);
+  m.specularColor.copy(cor.acab === 'silk' ? base.clone().lerp(new THREE.Color('#ffffff'), 0.5) : new THREE.Color('#ffffff'));
+  m.userData.u.uAmp.value = a.camadas;
+  m.needsUpdate = true;
 }
 
 /* ---------- estado ---------- */
@@ -390,7 +401,7 @@ function atualizarResumo() {
     `<div class="lin"><span class="pt" style="background:${z.cor.hex}"></span><b>${z.rotulo}</b>${z.cor.nome} <span style="color:var(--nk-suave)">· ${CONFIG.acabamentos[z.cor.acab].rotulo}</span></div>`).join('');
   $('resumo').innerHTML = linhas + '<small>Ao comprar, informe essas cores na variação ou no campo de observações do pedido.</small>';
   const varias = Object.keys(zonas).length > 1;
-  $('tag').innerHTML = Object.values(zonas).map(z => `<span><i style="background:${z.cor.hex}"></i>${varias ? z.rotulo + ': ' : ''}${z.cor.nome}</span>`).join('');
+  $('tag').innerHTML = Object.values(zonas).map(z => `<span><i style="background:${z.cor.hex}"></i>${varias ? z.rotulo + ': ' : ''}${z.cor.nome}${sem(z.cor.nome).includes(sem(CONFIG.acabamentos[z.cor.acab].rotulo)) ? '' : ' · ' + CONFIG.acabamentos[z.cor.acab].rotulo}</span>`).join('');
   avisarAltura();
 }
 
@@ -418,8 +429,6 @@ controles.addEventListener('start', () => { $('dica').style.opacity = 0; });
 
 /* ---------- variação escolhida na loja → cor no modelo ---------- */
 // a página do produto (ponte-loja.js) envia {nika3d:'variacao', opcoes:[{grupo, valor}]}
-const sem = t => (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
-const contem = (txt, termo) => (' ' + txt + ' ').includes(' ' + termo + ' ');
 const LINHA_PALAVRAS = { velvet: ['velvet', 'fosco', 'matte'], silk: ['silk', 'v silk', 'seda', 'metalico'], premium: ['premium', 'solida', 'solido', 'brilho'] };
 
 function corDoTexto(valor) {
@@ -443,7 +452,9 @@ function aplicarVariacoes(opcoes) {
     const daPaleta = corDoTexto(valor);
     const linha = Object.keys(LINHA_PALAVRAS).find(k => LINHA_PALAVRAS[k].some(p => contem(sem(valor), p)));
     if (!daPaleta && !hex) continue;
-    const cor = hex ? { nome: valor, hex, acab: daPaleta?.acab || linha || 'premium' } : daPaleta;
+    // nome da tabela (ex.: "Rosa Bebê Velvet") → cor e efeito da linha; senão, a cor cadastrada na loja
+    const cor = daPaleta ? { nome: valor, hex: daPaleta.hex, acab: daPaleta.acab }
+                         : { nome: valor, hex, acab: linha || 'premium' };
     const z = zonaDoTexto(grupo) || zonaDoTexto(valor);
     const alvo = z ? [z] : Object.keys(zonas);                        // grupo "Cor" sem parte = peça inteira
     alvo.forEach(n => { zonas[n].cor = cor; zonas[n].materiais.forEach(m => pintar(m, cor)); });
