@@ -1,6 +1,6 @@
 # Nikateliê — Simulador de Cores 3D
 
-Visualizador 3D das peças impressas da [Nikateliê](https://www.nikatlie.com.br): o cliente gira a peça e escolhe a cor de cada parte (PLA Voolt3D: Premium, Velvet e V-Silk).
+Visualizador 3D das peças impressas da [Nikateliê](https://www.nikatelie.com.br): o cliente gira a peça e escolhe a cor de cada parte (PLA Voolt3D: Premium, Velvet e V-Silk).
 
 **Site:** https://rrs747.github.io/nika/
 
@@ -10,8 +10,8 @@ Visualizador 3D das peças impressas da [Nikateliê](https://www.nikatlie.com.br
 |-------------------------|-------------------------|--------------------------|
 | `caixa-agulhas`         | Caixa de Agulhas        | Caixa, Tampa, Aplique    |
 | `suporte-4-prateleiras` | Suporte 4 Prateleiras   | Laterais, Prateleiras    |
-| `fita-metrica`          | Porta Fita Métrica      | Corpo, Tampa             |
-| `bobinas`               | Bobinas                 | Disco de cima, de baixo  |
+| `fita-metrica`          | Porta Fita Métrica      | uma cor só               |
+| `bobinas`               | Bobinas                 | uma cor só               |
 
 ## Como usar na Loja Integrada
 

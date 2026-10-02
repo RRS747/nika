@@ -130,6 +130,7 @@
    Cor inicial de cada parte: "linha:Nome" (ex.: "velvet:Azul").
    As "zonas" são as partes da peça que podem ter cores diferentes
    (o nome antes de "__" em cada parte do .glb).
+   Partes com o mesmo rótulo (ex.: "Peça") ficam com uma cor só.
    Para mostrar SÓ um produto numa página da loja, use o link com
    ?produto=ID  (ex.: index.html?produto=caixa-agulhas)
    ===================================================================== */
@@ -143,10 +144,10 @@ const CONFIG = {
       zonas: { Laterais: ["Laterais", "velvet:Preto"], Prateleiras: ["Prateleiras", "premium:Branco Dental"] } },
     { id: "fita-metrica", nome: "Porta Fita Métrica", arquivo: "modelos/fita-metrica.glb",
       sub: "Estojo vazado que enrola a fita métrica girando o botão.",
-      zonas: { Corpo: ["Corpo", "velvet:Verde Macaron"], Tampa: ["Tampa", "velvet:Branco"] } },
+      zonas: { Corpo: ["Peça", "velvet:Verde Macaron"], Tampa: ["Peça", "velvet:Verde Macaron"] } },
     { id: "bobinas", nome: "Bobinas", arquivo: "modelos/bobinas.glb",
-      sub: "Bobinas de duas partes — dá para combinar duas cores.",
-      zonas: { Superior: ["Disco de cima", "silk:Rosa Choque"], Inferior: ["Disco de baixo", "premium:Branco Dental"] } },
+      sub: "Bobinas para máquina de costura.",
+      zonas: { Superior: ["Peça", "silk:Rosa Choque"], Inferior: ["Peça", "silk:Rosa Choque"] } },
   ],
   // Catálogo PLA Voolt3D (voolt3d.com.br/pla). Cores em hex são aproximações — ajuste olhando o carretel.
   acabamentos: {
@@ -297,8 +298,9 @@ function montar(raiz, p) {
     o.geometry = toCreasedNormals(o.geometry, THREE.MathUtils.degToRad(35));
     o.material = criarMaterial(eixo);
     const cfg = p.zonas[zona] || [zona, CONFIG.cores[0].nome];
-    zonas[zona] ??= { rotulo: cfg[0], cor: corPorNome(cfg[1]), materiais: [] };
-    zonas[zona].materiais.push(o.material);
+    const chave = cfg[0];                       // partes com o mesmo rótulo = uma cor só
+    zonas[chave] ??= { rotulo: cfg[0], cor: corPorNome(cfg[1]), materiais: [] };
+    zonas[chave].materiais.push(o.material);
   });
   for (const z of Object.values(zonas)) z.materiais.forEach(m => pintar(m, z.cor));
 
@@ -316,6 +318,7 @@ function montar(raiz, p) {
   // UI de zonas
   const nomes = Object.keys(zonas);
   $('blocoZonas').style.display = nomes.length > 1 ? '' : 'none';
+  if (fixo) $('titulo').textContent = fixo.nome + (nomes.length > 1 ? ' — escolha as cores' : ' — escolha a cor');
   $('zonas').innerHTML = '';
   nomes.forEach(n => {
     const b = document.createElement('button'); b.dataset.z = n;
