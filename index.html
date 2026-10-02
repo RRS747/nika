@@ -167,6 +167,9 @@ const CONFIG = {
     silk: { rotulo: "V-Silk", desc: "PLA V-Silk — brilho acetinado com efeito metálico." },
     duo: { rotulo: "Duo Shadow", desc: "PLA Duo Color Shadow (V-Silk) — 70% cor principal e 30% escura: a segunda cor aparece como sombra nas curvas e muda com o ângulo." },
     tri: { rotulo: "Tri Color", desc: "PLA Tri Color (V-Silk) — três cores que giram no fio: a peça muda de cor conforme o ângulo de visão e a luz." },
+    evo: { rotulo: "Evo", desc: "PLA Evo — liso com brilho leve." },
+    stone: { rotulo: "Stone", desc: "PLA Stone — fosco, aspecto de pedra." },
+    wood: { rotulo: "Wood", desc: "PLA Wood — fosco, com partículas de madeira." },
   },
   cores: [
     { nome: "Branco Dental", hex: "#F4F4F0", acab: "premium" },
@@ -209,6 +212,59 @@ const CONFIG = {
     { nome: "Ametista / Azul Safira / Dourado", hex: "#8E5BB5", acab: "tri", multi: ["#8E5BB5", "#1F4FA8", "#D4A93C"] },
     { nome: "Azul / Laranja / Verde Neon", hex: "#2F6DB5", acab: "tri", multi: ["#2F6DB5", "#F07A1E", "#7CE03A"] },
     { nome: "Azul Safira / Dourado / Verde", hex: "#1F4FA8", acab: "tri", multi: ["#1F4FA8", "#D4A93C", "#2E9E5B"] },
+    // cores do catálogo que não aparecem na paleta, mas são reconhecidas pelo nome/código da variação
+    { nome: "Cinza Grafite", hex: "#4A4D52", acab: "premium", oculta: true },
+    { nome: "Vermelho Marsala", hex: "#7E2635", acab: "premium", oculta: true },
+    { nome: "Laranja", hex: "#F26A1B", acab: "premium", oculta: true },
+    { nome: "Rosa Bebê", hex: "#F6C1D3", acab: "premium", oculta: true },
+    { nome: "Rosa Púrpura", hex: "#C2187A", acab: "premium", oculta: true },
+    { nome: "Roxo", hex: "#6A3AA2", acab: "premium", oculta: true },
+    { nome: "Azul Cyan", hex: "#00A6D6", acab: "premium", oculta: true },
+    { nome: "Verde Tiffany", hex: "#81D8D0", acab: "premium", oculta: true },
+    { nome: "Bege Caucasiano", hex: "#E8C9A8", acab: "premium", oculta: true },
+    { nome: "Marrom Caramelo", hex: "#B5713A", acab: "premium", oculta: true },
+    { nome: "Marrom Cappuccino", hex: "#8A6A52", acab: "premium", oculta: true },
+    { nome: "Marrom", hex: "#6B4226", acab: "premium", oculta: true },
+    { nome: "Branco Off White", hex: "#EEE8DA", acab: "velvet", oculta: true },
+    { nome: "Grafeno", hex: "#2B2D30", acab: "velvet", oculta: true },
+    { nome: "Cinza Claro", hex: "#BEBEBE", acab: "velvet", oculta: true },
+    { nome: "Cinza Grafite", hex: "#4B4E53", acab: "velvet", oculta: true },
+    { nome: "Vermelho", hex: "#B5202E", acab: "velvet", oculta: true },
+    { nome: "Amarelo", hex: "#F2C230", acab: "velvet", oculta: true },
+    { nome: "Azul", hex: "#2A55B0", acab: "velvet", oculta: true },
+    { nome: "Verde", hex: "#2E8B57", acab: "velvet", oculta: true },
+    { nome: "Marrom Cappuccino", hex: "#8B6B55", acab: "velvet", oculta: true },
+    { nome: "Marrom", hex: "#6A4430", acab: "velvet", oculta: true },
+    { nome: "Laranja Macaron", hex: "#F8C49A", acab: "velvet", oculta: true },
+    { nome: "Amarelo Macaron", hex: "#F8E7A0", acab: "velvet", oculta: true },
+    { nome: "Dourado Ultra", hex: "#E8B000", acab: "silk", oculta: true },
+    { nome: "Champagne", hex: "#E6D2A8", acab: "silk", oculta: true },
+    { nome: "Bronze", hex: "#A5703A", acab: "silk", oculta: true },
+    { nome: "Alumínio", hex: "#C8CCD0", acab: "silk", oculta: true },
+    { nome: "Preto", hex: "#2A2A2A", acab: "silk", oculta: true },
+    { nome: "Vermelho", hex: "#C21E2A", acab: "silk", oculta: true },
+    { nome: "Laranja", hex: "#F07A1E", acab: "silk", oculta: true },
+    { nome: "Amarelo", hex: "#F3CB2A", acab: "silk", oculta: true },
+    { nome: "Rosa", hex: "#EE8FB8", acab: "silk", oculta: true },
+    { nome: "Rosa Ametista", hex: "#B5578F", acab: "silk", oculta: true },
+    { nome: "Rosa Salmão Neon", hex: "#FF7F79", acab: "silk", oculta: true },
+    { nome: "Lilás", hex: "#B79CDB", acab: "silk", oculta: true },
+    { nome: "Azul Metalizado", hex: "#2F6DB5", acab: "silk", oculta: true },
+    { nome: "Azul Titanium", hex: "#4E6A8C", acab: "silk", oculta: true },
+    { nome: "Azul Sky", hex: "#5DB3E8", acab: "silk", oculta: true },
+    { nome: "Azul Bebê", hex: "#A8D2F0", acab: "silk", oculta: true },
+    { nome: "Verde Bebê", hex: "#B3E2C2", acab: "silk", oculta: true },
+    { nome: "Verde Neon", hex: "#7CE03A", acab: "silk", oculta: true },
+    { nome: "Preto", hex: "#1C1C1C", acab: "evo", oculta: true },
+    { nome: "Branco Off White", hex: "#EEE8DA", acab: "evo", oculta: true },
+    { nome: "Crema Marfil", hex: "#E9DDC6", acab: "stone", oculta: true },
+    { nome: "Verde Ardósia", hex: "#5E6E62", acab: "stone", oculta: true },
+    { nome: "Grafite", hex: "#55585C", acab: "stone", oculta: true },
+    { nome: "Marmorizado", hex: "#DCDAD6", acab: "stone", oculta: true },
+    { nome: "Gesso", hex: "#ECEBE6", acab: "stone", oculta: true },
+    { nome: "Pinus Wood", hex: "#D9B98A", acab: "wood", oculta: true },
+    { nome: "Tabaco Wood", hex: "#8A5A35", acab: "wood", oculta: true },
+    { nome: "Carvão Wood", hex: "#3B3330", acab: "wood", oculta: true },
   ],
   alturaCamadaMM: 0.2,
 };
@@ -266,6 +322,9 @@ const ACAB = {
   // duo / tri: V-Silk coextrudado (2 ou 3 cores no mesmo fio)
   premium: { roughness: 0.38, metalness: 0,    clearcoat: 0.3, clearcoatRoughness: 0.3,  sheen: 0,   iridescence: 0,    camadas: 0.16 },
   velvet:  { roughness: 0.92, metalness: 0,    clearcoat: 0,   clearcoatRoughness: 1,    sheen: 0.5, sheenRoughness: 0.6,  iridescence: 0, camadas: 0.05 },
+  evo:     { roughness: 0.38, metalness: 0,    clearcoat: 0.3, clearcoatRoughness: 0.3,  sheen: 0,   iridescence: 0,    camadas: 0.16 },
+  stone:   { roughness: 0.92, metalness: 0,    clearcoat: 0,   clearcoatRoughness: 1,    sheen: 0.2, sheenRoughness: 0.6,  iridescence: 0, camadas: 0.05 },
+  wood:    { roughness: 0.92, metalness: 0,    clearcoat: 0,   clearcoatRoughness: 1,    sheen: 0.2, sheenRoughness: 0.6,  iridescence: 0, camadas: 0.05 },
   silk:    { roughness: 0.24, metalness: 0.3,  clearcoat: 1,   clearcoatRoughness: 0.06, sheen: 0,   iridescence: 0.3,  iridescenceIOR: 1.5, camadas: 0.24 },
   duo:     { roughness: 0.24, metalness: 0.3,  clearcoat: 1,   clearcoatRoughness: 0.06, sheen: 0,   iridescence: 0.3,  iridescenceIOR: 1.5, camadas: 0.24 },
   tri:     { roughness: 0.24, metalness: 0.3,  clearcoat: 1,   clearcoatRoughness: 0.06, sheen: 0,   iridescence: 0.3,  iridescenceIOR: 1.5, camadas: 0.24 },
@@ -420,7 +479,7 @@ function mostrarAcab(k) {
   [...$('abas').children].forEach(b => b.setAttribute('aria-selected', b.dataset.k === k));
   $('descAcab').textContent = CONFIG.acabamentos[k].desc;
   $('cores').innerHTML = '';
-  CONFIG.cores.filter(c => c.acab === k).forEach(c => {
+  CONFIG.cores.filter(c => c.acab === k && !c.oculta).forEach(c => {
     const b = document.createElement('button');
     b.className = 'nk-cor ' + c.acab; b.setAttribute('role', 'radio');
     b.style.backgroundColor = c.hex; b.title = c.nome;
@@ -449,7 +508,7 @@ function atualizarResumo() {
 }
 
 /* ---------- montar interface ---------- */
-Object.keys(CONFIG.acabamentos).filter(k => CONFIG.cores.some(c => c.acab === k)).forEach(k => {
+Object.keys(CONFIG.acabamentos).filter(k => CONFIG.cores.some(c => c.acab === k && !c.oculta)).forEach(k => {
   const b = document.createElement('button'); b.setAttribute('role', 'tab');
   b.textContent = CONFIG.acabamentos[k].rotulo; b.dataset.k = k;
   b.onclick = () => mostrarAcab(k);
@@ -472,7 +531,7 @@ controles.addEventListener('start', () => { $('dica').style.opacity = 0; });
 
 /* ---------- variação escolhida na loja → cor no modelo ---------- */
 // a página do produto (ponte-loja.js) envia {nika3d:'variacao', opcoes:[{grupo, valor}]}
-const LINHA_PALAVRAS = { duo: ['duo', 'shadow'], tri: ['tri color', 'tricolor', 'tri'], velvet: ['velvet', 'fosco', 'matte'], silk: ['silk', 'v silk', 'seda', 'metalico'], premium: ['premium', 'solida', 'solido'] };
+const LINHA_PALAVRAS = { duo: ['duo', 'shadow'], tri: ['tri color', 'tricolor', 'tri'], velvet: ['velvet', 'fosco', 'matte'], silk: ['silk', 'v silk', 'seda', 'metalico'], evo: ['evo'], stone: ['stone'], wood: ['wood'], premium: ['premium', 'solida', 'solido'] };
 
 function corDoTexto(valor) {
   const v = sem(valor);
@@ -496,7 +555,7 @@ function aplicarVariacoes(opcoes) {
     const linha = Object.keys(LINHA_PALAVRAS).find(k => LINHA_PALAVRAS[k].some(p => contem(sem(valor), p)));
     if (!daPaleta && !hex) continue;
     // nome da tabela (ex.: "Rosa Bebê Velvet") → cor e efeito da linha; senão, a cor cadastrada na loja
-    const cor = daPaleta ? { nome: valor, hex: daPaleta.hex, acab: daPaleta.acab, multi: daPaleta.multi }
+    const cor = daPaleta ? { nome: daPaleta.nome, hex: daPaleta.hex, acab: daPaleta.acab, multi: daPaleta.multi }
                          : { nome: valor, hex, acab: linha || 'premium' };
     const z = zonaDoTexto(grupo) || zonaDoTexto(valor);
     const alvo = z ? [z] : Object.keys(zonas);                        // grupo "Cor" sem parte = peça inteira
