@@ -24,6 +24,14 @@ Visualizador 3D das peças impressas da [Nikateliê](https://www.nikatelie.com.b
 3. **Variações** — use o nome da cor do simulador no valor (ex.: `Rosa Bebê Velvet`, `Dourado Silk`).
    Para peças com partes, ponha a parte no nome do grupo (ex.: `Cor da Tampa`); um grupo só `Cor` pinta a peça inteira.
 
+## Nome personalizado
+
+O cliente digita o nome na página do produto (campo criado pelo script) e vê o nome aplicado na peça.
+Ao clicar em Comprar, o nome fica guardado no navegador; o carrinho mostra um quadro com "Copiar personalização"
+para colar no campo **Comentário** do checkout (Configurações > Gerais > Checkout). A Loja Integrada não permite
+código no checkout, por isso o preenchimento não é automático. Posição do nome em cada peça: `personalizar` no `CONFIG`
+(bobinas sem nome: o disco é pequeno demais).
+
 ## Como editar cores e produtos
 
 Tudo fica no bloco `CONFIG` no início do `<script type="module">` do `index.html`:

@@ -167,14 +167,99 @@
     document.querySelectorAll('style').forEach(function (s) { if (/\.nika3d/.test(s.textContent)) s.remove(); });
   }
 
+  /* ---------- nome personalizado ---------- */
+  // Campo na página do produto → aparece no modelo 3D; ao clicar em Comprar fica guardado e
+  // o carrinho mostra um quadro para o cliente copiar no campo "Comentário" do checkout.
+  var CHAVE = 'nika3d-personalizacoes';
+  function lerLista() { try { return JSON.parse(localStorage.getItem(CHAVE) || '[]'); } catch (e) { return []; } }
+  function gravarLista(l) { try { localStorage.setItem(CHAVE, JSON.stringify(l)); } catch (e) {} }
+  function campoNome() { return document.getElementById('nika3d-nome'); }
+  function obrigatorio() { var c = document.querySelector('.nika3d'); return c && c.getAttribute('data-nome') === 'obrigatorio'; }
+
+  function criarCampoNome() {
+    if (campoNome()) return;
+    var ref = document.querySelector('.atributos') || document.querySelector('.acoes-produto:not(.hide)');
+    if (!ref) return;
+    var box = document.createElement('div');
+    box.className = 'nika3d-nome-box';
+    box.style.cssText = 'margin:12px 0 8px;padding:10px 12px;border:1.5px solid #F1D6E3;border-radius:10px;background:#FFF7FA';
+    box.innerHTML = '<label for="nika3d-nome" style="display:block;font:600 13px Arial,sans-serif;color:#3A2733;margin-bottom:6px">' +
+      'Nome para personalizar' + (obrigatorio() ? ' <span style="color:#C42F72">*</span>' : ' <span style="color:#86707C;font-weight:400">(opcional)</span>') + '</label>' +
+      '<input id="nika3d-nome" type="text" maxlength="20" autocomplete="off" placeholder="Ex.: Maria" ' +
+      'style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #E5C3D3;border-radius:8px;font:15px Arial,sans-serif">' +
+      '<small style="display:block;margin-top:6px;color:#86707C;font:12px Arial,sans-serif">Veja o nome na peça ao lado. No final da compra, cole a personalização no campo “Comentário”.</small>' +
+      '<div id="nika3d-nome-erro" style="display:none;margin-top:6px;color:#C42F72;font:600 12px Arial,sans-serif">Digite o nome para personalizar antes de comprar.</div>';
+    ref.parentNode.insertBefore(box, ref.nextSibling);
+    var t = null;
+    campoNome().addEventListener('input', function () {
+      document.getElementById('nika3d-nome-erro').style.display = 'none';
+      clearTimeout(t); var v = campoNome().value;
+      t = setTimeout(function () { iframes().forEach(function (f) { enviarPara(f, { nika3d: 'nome', texto: v }); }); }, 150);
+    });
+  }
+
+  function variacaoAtual() { return selecionadas().map(function (o) { return o.valor; }).join(' / '); }
+  function aoComprar(ev) {
+    var botao = ev.target.closest && ev.target.closest('.botao-comprar, a[class*="comprar"], button[class*="comprar"]');
+    if (!botao || !campoNome()) return;
+    var nome = limpo(campoNome().value);
+    if (!nome) {
+      if (obrigatorio()) {
+        ev.preventDefault(); ev.stopImmediatePropagation();
+        document.getElementById('nika3d-nome-erro').style.display = 'block';
+        campoNome().focus();
+      }
+      return;
+    }
+    var h1 = document.querySelector('h1.nome-produto, .nome-produto, h1');
+    var item = { produto: limpo(h1 && h1.textContent), variacao: variacaoAtual(), nome: nome, quando: Date.now() };
+    var lista = lerLista().filter(function (x) { return Date.now() - x.quando < 3 * 864e5; });
+    lista.push(item); gravarLista(lista);
+  }
+  document.addEventListener('click', aoComprar, true);
+
+  function textoPersonalizacao(lista) {
+    return lista.map(function (x) { return x.produto + (x.variacao ? ' (' + x.variacao + ')' : '') + ' – Nome: ' + x.nome; }).join(' | ');
+  }
+  function quadroCarrinho() {
+    if (!/carrinho/i.test(location.pathname)) return;
+    var lista = lerLista().filter(function (x) { return Date.now() - x.quando < 3 * 864e5; });
+    gravarLista(lista);
+    if (!lista.length || document.getElementById('nika3d-carrinho')) return;
+    var alvo = document.querySelector('.carrinho, #carrinho, .tabela-carrinho, form[action*="carrinho"], #corpo .conteiner, #corpo') || document.body;
+    var box = document.createElement('div');
+    box.id = 'nika3d-carrinho';
+    box.style.cssText = 'margin:12px 0 16px;padding:14px 16px;border:2px solid #E5458C;border-radius:12px;background:#FFF7FA;font:14px Arial,sans-serif;color:#3A2733';
+    var linhas = lista.map(function (x, i) {
+      return '<li style="margin:4px 0">' + x.produto.replace(/</g, '&lt;') + (x.variacao ? ' <span style="color:#86707C">(' + x.variacao.replace(/</g, '&lt;') + ')</span>' : '') +
+        ' — <b>' + x.nome.replace(/</g, '&lt;') + '</b> <a href="javascript:;" data-i="' + i + '" style="color:#C42F72;font-size:12px;margin-left:6px">remover</a></li>';
+    }).join('');
+    box.innerHTML = '<b style="font-size:15px">Personalização das peças 3D</b>' +
+      '<ul style="margin:8px 0 10px;padding-left:18px">' + linhas + '</ul>' +
+      '<button type="button" id="nika3d-copiar" style="background:#E5458C;color:#fff;border:0;border-radius:8px;padding:8px 14px;font:600 13px Arial,sans-serif;cursor:pointer">Copiar personalização</button>' +
+      '<span style="margin-left:10px;color:#86707C;font-size:12.5px">Cole no campo <b>“Comentário”</b> ao finalizar a compra.</span>';
+    alvo.insertBefore(box, alvo.firstChild);
+    box.querySelector('#nika3d-copiar').onclick = function () {
+      var txt = textoPersonalizacao(lerLista()), b = this;
+      (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function () { b.textContent = 'Copiado!'; },
+        function () { window.prompt('Copie o texto abaixo:', txt); });
+    };
+    box.querySelectorAll('a[data-i]').forEach(function (a) {
+      a.onclick = function () { var l = lerLista(); l.splice(+a.getAttribute('data-i'), 1); gravarLista(l); box.remove(); quadroCarrinho(); };
+    });
+  }
+
   /* ---------- conversa com o simulador ---------- */
   window.addEventListener('message', function (e) {
     if (e.origin !== ORIGEM || !e.data) return;
     if (e.data.nika3dPronto) {
+      if (e.data.personalizar) criarCampoNome();
+      if (campoNome() && campoNome().value) iframes().forEach(function (f) { enviarPara(f, { nika3d: 'nome', texto: campoNome().value }); });
       iframes().forEach(function (f) { if (f.contentWindow === e.source) enviarPara(f, { nika3d: 'modo', modo: 'loja' }); });
       enviar(selecionadas());
     }
   });
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', posicionar); else posicionar();
+  function iniciar() { posicionar(); quadroCarrinho(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })();

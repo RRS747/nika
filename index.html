@@ -76,6 +76,8 @@
   body.modo-loja .nk-tag{display:flex}
   body.modo-loja .nk-selo{font-size:10.5px;padding:6px 9px}
   body.modo-loja .nk-medida{top:40px;font-size:10.5px}
+.nk-input{width:100%;border:1.5px solid var(--nk-borda);border-radius:12px;padding:10px 12px;font:600 15px 'Nunito',sans-serif;color:var(--nk-tinta);outline:none}
+  .nk-input:focus{border-color:var(--nk-rosa)}
   .nk-aviso{font-size:12px;color:var(--nk-suave);line-height:1.45;margin:0}
 </style>
 </head>
@@ -107,6 +109,11 @@
     <div id="blocoModelos">
       <div class="nk-rot">Produto</div>
       <div class="nk-chips modelos" id="modelos"></div>
+    </div>
+
+    <div id="blocoNome">
+      <div class="nk-rot">Nome na peça</div>
+      <input id="nomeInput" class="nk-input" maxlength="20" placeholder="Digite um nome (opcional)" autocomplete="off">
     </div>
 
     <div id="blocoZonas">
@@ -147,22 +154,22 @@
    ===================================================================== */
 const CONFIG = {
   produtos: [
-    { id: "caixa-agulhas", nome: "Caixa de Agulhas", arquivo: "modelos/caixa-agulhas.glb",
+    { id: "caixa-agulhas", personalizar: { origem: [0.5, 0.3, 1.6], dir: [0, 0, -1], largura: 0.6 }, nome: "Caixa de Agulhas", arquivo: "modelos/caixa-agulhas.glb",
       sub: "Caixa com tampa e aplique de máquina de costura. Escolha uma cor para cada parte.",
       zonas: { Caixa: ["Caixa", "premium:Azul"], Tampa: ["Tampa", "premium:Azul"], Aplique: ["Aplique", "premium:Branco Dental"] } },
-    { id: "suporte-4-prateleiras", nome: "Suporte 4 Prateleiras", arquivo: "modelos/suporte-4-prateleiras.glb",
+    { id: "suporte-4-prateleiras", personalizar: { origem: [0.5, 1.6, 0.86], dir: [0, -1, 0], largura: 0.5 }, nome: "Suporte 4 Prateleiras", arquivo: "modelos/suporte-4-prateleiras.glb",
       sub: "Expositor em escada para miniaturas, bonecos e esmaltes.",
       zonas: { Laterais: ["Laterais", "velvet:Preto"], Prateleiras: ["Prateleiras", "premium:Branco Dental"] } },
-    { id: "fita-metrica", nome: "Porta Fita Métrica", arquivo: "modelos/fita-metrica.glb",
+    { id: "fita-metrica", personalizar: { origem: [0.5, 1.6, 0.83], dir: [0, -1, 0], largura: 0.32 }, nome: "Porta Fita Métrica", arquivo: "modelos/fita-metrica.glb",
       sub: "Estojo vazado que enrola a fita métrica girando o botão.",
       zonas: { Corpo: ["Peça", "velvet:Verde Macaron"], Tampa: ["Peça", "velvet:Verde Macaron"] } },
     { id: "bobinas", nome: "Bobinas", arquivo: "modelos/bobinas.glb",
       sub: "Bobinas para máquina de costura.",
       zonas: { Superior: ["Peça", "silk:Rosa Choque"], Inferior: ["Peça", "silk:Rosa Choque"] } },
-    { id: "suporte-3-prateleiras", nome: "Suporte 3 Prateleiras", arquivo: "modelos/suporte-3-prateleiras.glb",
+    { id: "suporte-3-prateleiras", personalizar: { origem: [0.5, 1.6, 0.2], dir: [0, -1, 0], largura: 0.5 }, nome: "Suporte 3 Prateleiras", arquivo: "modelos/suporte-3-prateleiras.glb",
       sub: "Expositor em arco com 3 níveis — organizador de mesa moderno.",
       zonas: { Laterais: ["Laterais", "velvet:Preto"], Prateleiras: ["Prateleiras", "premium:Branco Dental"] } },
-    { id: "porta-canetinhas-80", nome: "Porta Canetinhas 80", arquivo: "modelos/porta-canetinhas-80.glb",
+    { id: "porta-canetinhas-80", personalizar: { origem: [0.5, 0.45, 1.6], dir: [0, 0, -1], largura: 0.55 }, nome: "Porta Canetinhas 80", arquivo: "modelos/porta-canetinhas-80.glb",
       sub: "Suporte inclinado para 80 canetinhas/marcadores.",
       zonas: { Peca: ["Peça", "velvet:Lilás Macaron"] } },
   ],
@@ -281,6 +288,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
+import { DecalGeometry } from 'three/addons/geometries/DecalGeometry.js';
 
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -430,6 +438,7 @@ function montar(raiz, p) {
     const chave = cfg[0];                       // partes com o mesmo rótulo = uma cor só
     zonas[chave] ??= { rotulo: cfg[0], cor: corPorNome(cfg[1]), materiais: [] };
     zonas[chave].materiais.push(o.material);
+    o.userData.zona = chave;
   });
   for (const z of Object.values(zonas)) z.materiais.forEach(m => pintar(m, z.cor));
 
@@ -457,7 +466,9 @@ function montar(raiz, p) {
   });
   selZona(nomes[0]);
   if (variacaoPendente) { const v = variacaoPendente; variacaoPendente = null; aplicarVariacoes(v); }
-  if (parent !== window) parent.postMessage({ nika3dPronto: true }, '*');
+  $('blocoNome').style.display = p.personalizar ? '' : 'none';
+  if (nomeAtual) aplicarNome(nomeAtual);
+  if (parent !== window) parent.postMessage({ nika3dPronto: true, personalizar: !!p.personalizar }, '*');
 }
 
 function enquadrar() {
@@ -509,11 +520,68 @@ function atualizarResumo() {
     `<div class="lin"><span class="pt" style="background:${z.cor.multi ? 'conic-gradient(' + z.cor.multi.join(',') + ')' : z.cor.hex}"></span><b>${z.rotulo}</b>${z.cor.nome} <span style="color:var(--nk-suave)">· ${CONFIG.acabamentos[z.cor.acab].rotulo}</span></div>`).join('');
   $('resumo').innerHTML = linhas + '<small>Ao comprar, informe essas cores na variação ou no campo de observações do pedido.</small>';
   const varias = Object.keys(zonas).length > 1;
+  setTimeout(() => nomeAtual && aplicarNome(nomeAtual), 0);
   $('tag').innerHTML = Object.values(zonas).map(z => `<span><i style="background:${z.cor.multi ? 'conic-gradient(' + z.cor.multi.join(',') + ')' : z.cor.hex}"></i>${varias ? z.rotulo + ': ' : ''}${z.cor.nome}${sem(z.cor.nome).includes(sem(CONFIG.acabamentos[z.cor.acab].rotulo)) ? '' : ' · ' + CONFIG.acabamentos[z.cor.acab].rotulo}</span>`).join('');
   avisarAltura();
 }
 
-/* ---------- montar interface ---------- */
+/* ---------- nome personalizado aplicado na peça ---------- */
+let nomeAtual = '', decal = null;
+const raio = new THREE.Raycaster();
+function texturaNome(texto, cor) {
+  const c = document.createElement('canvas'), g = c.getContext('2d');
+  const fonte = "600 160px 'Fredoka', 'Nunito', sans-serif";
+  g.font = fonte; const w = Math.ceil(g.measureText(texto).width) + 60;
+  c.width = Math.max(64, w); c.height = 220;
+  g.font = fonte; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.translate(c.width, 0); g.scale(-1, 1);                // o decalque projeta espelhado: desespelha aqui
+  g.fillStyle = cor; g.fillText(texto, c.width / 2, c.height / 2 + 8);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  return { t, aspecto: c.height / c.width };
+}
+function corContraste(hex) {
+  const c = new THREE.Color(hex), l = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;   // linear
+  return l > 0.35 ? '#3A2733' : '#FFFFFF';
+}
+function aplicarNome(texto) {
+  nomeAtual = (texto || '').trim().slice(0, 20);
+  if (decal) { cena.remove(decal); decal.geometry.dispose(); decal.material.map?.dispose(); decal.material.dispose(); decal = null; }
+  if (!nomeAtual || !grupo || !produto?.personalizar) return;
+  const cfg = produto.personalizar; if (!cfg) return;
+  grupo.updateMatrixWorld(true);
+  const caixa = new THREE.Box3().setFromObject(grupo), tam = caixa.getSize(new THREE.Vector3());
+  const origem = new THREE.Vector3(...cfg.origem).multiply(tam).add(caixa.min);
+  const dir = new THREE.Vector3(...cfg.dir).normalize();
+  raio.set(origem, dir);
+  const malhas = []; grupo.traverse(o => o.isMesh && malhas.push(o));
+  const hit = raio.intersectObjects(malhas, false)[0];
+  if (!hit) return;
+  const normal = hit.face.normal.clone().transformDirection(hit.object.matrixWorld).normalize();
+  const vertical = Math.abs(normal.y) > 0.8;
+  const up = vertical ? new THREE.Vector3(0, 0, -1) : new THREE.Vector3(0, 1, 0);
+  const m = new THREE.Matrix4().lookAt(hit.point, hit.point.clone().add(normal), up);
+  const ori = new THREE.Euler().setFromRotationMatrix(m);
+  const larg = cfg.largura * Math.max(vertical ? tam.x : (Math.abs(normal.x) > 0.5 ? tam.z : tam.x), 0.01);
+  const zona = zonas[hit.object.userData.zona];
+  const { t, aspecto } = texturaNome(nomeAtual, corContraste(zona?.cor.hex || '#ffffff'));
+  const geo = new DecalGeometry(hit.object, hit.point, ori, new THREE.Vector3(larg, larg * aspecto, larg * 0.6));
+  const mat = new THREE.MeshPhysicalMaterial({ map: t, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4,
+    roughness: 0.35, clearcoat: 0.4, metalness: 0 });
+  decal = new THREE.Mesh(geo, mat);
+  decal.userData = { zona: hit.object.userData.zona };
+  cena.add(decal);
+  atualizarResumoNome();
+}
+function atualizarResumoNome() {
+  const tag = $('tag');
+  tag.querySelector('.nk-nome')?.remove();
+  if (nomeAtual) { const s = document.createElement('span'); s.className = 'nk-nome'; s.textContent = '“' + nomeAtual + '”'; tag.prepend(s); }
+}
+let timerNome = null;
+$('nomeInput').addEventListener('input', e => { clearTimeout(timerNome); timerNome = setTimeout(() => aplicarNome(e.target.value), 150); });
+document.fonts?.load("600 40px 'Fredoka'");
+
+
 Object.keys(CONFIG.acabamentos).filter(k => CONFIG.cores.some(c => c.acab === k && !c.oculta)).forEach(k => {
   const b = document.createElement('button'); b.setAttribute('role', 'tab');
   b.textContent = CONFIG.acabamentos[k].rotulo; b.dataset.k = k;
@@ -581,6 +649,7 @@ window.addEventListener('message', e => {
   if (!e.data) return;
   if (e.data.nika3d === 'modo' && e.data.modo === 'loja') modoLoja();
   if (e.data.nika3d === 'variacao' && Array.isArray(e.data.opcoes)) aplicarVariacoes(e.data.opcoes);
+  if (e.data.nika3d === 'nome') { $('nomeInput').value = e.data.texto || ''; aplicarNome(e.data.texto); }
 });
 
 /* ---------- tamanho / iframe ---------- */

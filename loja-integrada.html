@@ -1,8 +1,8 @@
 <!--
   =====================================================================
-  PASSO 1 — UMA VEZ SÓ: Configurações > Códigos HTML > Rodapé > Página de produto > tipo HTML
-  Faz o modelo 3D trocar de cor quando o cliente escolhe a variação do produto.
-  Só age nas páginas que tiverem o simulador.
+  PASSO 1 — UMA VEZ SÓ: Configurações > Códigos HTML > Rodapé > tipo HTML
+  Página(s) de publicação: "Todas as páginas exceto checkout" (precisa rodar também no carrinho).
+  Faz o modelo 3D trocar de cor com a variação, mostra o campo de nome e o quadro de personalização no carrinho.
   =====================================================================
 -->
 <script src="https://rrs747.github.io/nika/ponte-loja.js" defer></script>
@@ -15,9 +15,20 @@
   Troque o ?produto=... pela peça da página:
     caixa-agulhas | suporte-4-prateleiras | suporte-3-prateleiras | fita-metrica | bobinas | porta-canetinhas-80
   (para deixar o simulador completo na descrição, acrescente data-posicao="descricao" na div)
+  (para exigir o nome antes de comprar, acrescente data-nome="obrigatorio" na div)
   =====================================================================
 -->
 <div class="nika3d"><iframe src="https://rrs747.github.io/nika/?produto=bobinas" title="Simulador 3D" scrolling="no" style="width:100%;aspect-ratio:1/1;border:0"></iframe></div>
+
+
+<!--
+  =====================================================================
+  PASSO 3 — UMA VEZ SÓ: campo "Comentário" no checkout (onde o nome fica salvo no pedido)
+  Configurações > Gerais > seção Checkout > Inserir campo "Comentário" no checkout: Sim
+    Título: Personalização    Descrição: Cole aqui a personalização copiada no carrinho
+  O texto aparece no pedido em Vendas > Pedidos.
+  =====================================================================
+-->
 
 
 <!--
