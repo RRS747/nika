@@ -24,6 +24,12 @@ Visualizador 3D das peças impressas da [Nikateliê](https://www.nikatelie.com.b
 3. **Variações** — use o nome da cor do simulador no valor (ex.: `Rosa Bebê Velvet`, `Dourado Silk`).
    Para peças com partes, ponha a parte no nome do grupo (ex.: `Cor da Tampa`); um grupo só `Cor` pinta a peça inteira.
 
+## Ateliê
+
+Botão com ícone de casinha (ou `&cena=atelie` no link) mostra a peça em escala real num ateliê: mesa de madeira,
+base de corte, carretéis de linha, tecidos e painel perfurado, com sombras. `&foto=1` esconde a interface (usado para
+gerar as fotos de produto).
+
 ## Nome personalizado
 
 Desligado por padrão. Para uma peça com nome, use `<div class="nika3d" data-nome="sim">` (ou `"obrigatorio"`) na descrição do produto. O cliente digita o nome na página do produto e vê o nome aplicado na peça.

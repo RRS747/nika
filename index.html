@@ -74,6 +74,8 @@
   body.modo-loja .nk-painel,body.modo-loja .nk-dica,body.modo-loja #btnCentro{display:none}
   body.modo-loja .nk-palco{border-radius:10px;border:0}
   body.modo-loja .nk-tag{display:flex}
+  body.foto .nk-selo,body.foto .nk-btns,body.foto .nk-medida,body.foto .nk-tag,body.foto .nk-dica{display:none!important}
+  body.foto .nk-palco{border-radius:0}
   body.modo-loja .nk-selo{font-size:10.5px;padding:6px 9px}
   body.modo-loja .nk-medida{top:40px;font-size:10.5px}
 .nk-input{width:100%;border:1.5px solid var(--nk-borda);border-radius:12px;padding:10px 12px;font:600 15px 'Nunito',sans-serif;color:var(--nk-tinta);outline:none}
@@ -89,6 +91,9 @@
     <div class="nk-btns">
       <button id="btnGirar" aria-pressed="true" title="Girar automaticamente" aria-label="Girar automaticamente">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
+      </button>
+      <button id="btnAtelie" aria-pressed="false" title="Ver no ateliê" aria-label="Ver no ateliê">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V11l7-6 7 6v10"/><path d="M9 21v-5h6v5"/></svg>
       </button>
       <button id="btnCentro" title="Reenquadrar" aria-label="Reenquadrar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V3h5M21 8V3h-5M3 16v5h5M21 16v5h-5"/></svg>
@@ -304,6 +309,7 @@ const palco = $('palco');
 const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 palco.prepend(renderer.domElement);
 
@@ -311,7 +317,9 @@ const cena = new THREE.Scene();
 const pmrem = new THREE.PMREMGenerator(renderer);
 cena.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 const luz = new THREE.DirectionalLight(0xffffff, 1.3); luz.position.set(3, 5, 2);
-cena.add(luz, new THREE.HemisphereLight(0xffffff, 0xf3c6da, 0.45));
+luz.shadow.mapSize.set(2048, 2048); luz.shadow.bias = -0.0004; luz.shadow.normalBias = 0.02;
+const hemi = new THREE.HemisphereLight(0xffffff, 0xf3c6da, 0.45);
+cena.add(luz, hemi);
 
 const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
 const controles = new OrbitControls(camera, renderer.domElement);
@@ -429,7 +437,7 @@ function montar(raiz, p) {
     if (!o.isMesh) return;
     const [zona, ax] = o.name.split('__');
     // eixo de impressão da parte: "x" = deitada de lado; padrão = vertical (no .glb, Y para cima)
-    const eixo = ax === 'x' ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
+    const eixo = ax === 'x' ? new THREE.Vector3(1, 0, 0) : ax === 'f' ? new THREE.Vector3(0, 0, 1) : new THREE.Vector3(0, 1, 0);
     o.geometry.deleteAttribute('normal');
     o.geometry = toCreasedNormals(o.geometry, THREE.MathUtils.degToRad(35));
     o.material = criarMaterial(eixo);
@@ -450,6 +458,9 @@ function montar(raiz, p) {
   raiz.position.set(-(c.min.x + c.max.x) / 2, -c.min.y, -(c.min.z + c.max.z) / 2);
   cena.add(grupo);
   sombra.scale.setScalar(Math.max(tam.x, tam.z) * esc * 1.7);
+  medidas = { esc, tam: tam.clone() };
+  raiz.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  if (atelieLigado) construirAtelie();
   $('medida').textContent = `${Math.round(tam.x)} × ${Math.round(tam.z)} × ${Math.round(tam.y)} mm`;
   enquadrar();
 
@@ -477,9 +488,10 @@ function enquadrar() {
   const caixa = new THREE.Box3().setFromObject(grupo), centro = caixa.getCenter(new THREE.Vector3());
   const raio = caixa.getSize(new THREE.Vector3()).length() / 2;
   const fov = THREE.MathUtils.degToRad(camera.fov), ajuste = Math.min(1, camera.aspect);
-  const dist = raio / Math.sin(fov / 2) / ajuste * 1.12;
+  const dist = raio / Math.sin(fov / 2) / ajuste * (atelieLigado ? (document.body.classList.contains('foto') ? 1.3 : 1.55) : 1.12);
   controles.target.copy(centro);
-  camera.position.copy(centro).add(new THREE.Vector3(2.3, 1.6, 3.1).normalize().multiplyScalar(dist));
+  if (atelieLigado) controles.target.y = centro.y * 0.8;
+  camera.position.copy(centro).add((atelieLigado ? new THREE.Vector3(1.5, 1.05, 3.1) : new THREE.Vector3(2.3, 1.6, 3.1)).normalize().multiplyScalar(dist));
   controles.update();
 }
 
@@ -524,6 +536,121 @@ function atualizarResumo() {
   $('tag').innerHTML = Object.values(zonas).map(z => `<span><i style="background:${z.cor.multi ? 'conic-gradient(' + z.cor.multi.join(',') + ')' : z.cor.hex}"></i>${varias ? z.rotulo + ': ' : ''}${z.cor.nome}${sem(z.cor.nome).includes(sem(CONFIG.acabamentos[z.cor.acab].rotulo)) ? '' : ' · ' + CONFIG.acabamentos[z.cor.acab].rotulo}</span>`).join('');
   avisarAltura();
 }
+
+/* ---------- cenário: ateliê (mesa, parede, base de corte, linhas, tecidos) ---------- */
+let atelieLigado = params.get('cena') === 'atelie', atelie = null, medidas = null;
+function texCanvas(w, h, desenhar, repetir) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  desenhar(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  if (repetir) { t.wrapS = t.wrapT = THREE.RepeatWrapping; }
+  return t;
+}
+const TEX = {};
+function texMadeira() {
+  return TEX.madeira ??= texCanvas(1024, 1024, (g, w, h) => {
+    g.fillStyle = '#C79A6B'; g.fillRect(0, 0, w, h);
+    for (let y = 0; y < h; y++) {                               // veios
+      const v = Math.sin(y * 0.05 + Math.sin(y * 0.013) * 3) * 0.5 + Math.sin(y * 0.31) * 0.15;
+      g.fillStyle = `rgba(${v > 0 ? '120,78,45' : '235,200,160'},${Math.abs(v) * 0.22})`; g.fillRect(0, y, w, 1);
+    }
+    for (let i = 0; i < 9; i++) { g.fillStyle = 'rgba(90,55,30,.18)'; g.fillRect(0, (i + 1) * h / 9 - 2, w, 3); }   // tábuas
+    for (let i = 0; i < 4000; i++) { g.fillStyle = `rgba(80,50,25,${Math.random() * 0.06})`; g.fillRect(Math.random() * w, Math.random() * h, 30 + Math.random() * 120, 1); }
+  }, true);
+}
+function texParede() {
+  return TEX.parede ??= texCanvas(512, 512, (g, w, h) => {
+    g.fillStyle = '#F7EFEF'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 9000; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '255,255,255' : '190,150,160'},${Math.random() * 0.07})`; g.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
+  }, true);
+}
+function texPainel() {
+  return TEX.painel ??= texCanvas(512, 512, (g, w, h) => {
+    g.fillStyle = '#F3C9D9'; g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgba(120,40,80,.55)';
+    for (let x = 16; x < w; x += 32) for (let y = 16; y < h; y += 32) { g.beginPath(); g.arc(x, y, 4, 0, 7); g.fill(); }
+  }, true);
+}
+function texBaseCorte() {
+  return TEX.base ??= texCanvas(1200, 880, (g, w, h) => {          // 300 × 220 mm → 4 px/mm
+    g.fillStyle = '#2E6A52'; g.fillRect(0, 0, w, h);
+    for (let mm = 0; mm <= 300; mm += 10) { g.fillStyle = mm % 50 ? 'rgba(220,240,225,.35)' : 'rgba(240,250,240,.75)'; g.fillRect(mm * 4, 0, mm % 50 ? 1.5 : 3, h); }
+    for (let mm = 0; mm <= 220; mm += 10) { g.fillStyle = mm % 50 ? 'rgba(220,240,225,.35)' : 'rgba(240,250,240,.75)'; g.fillRect(0, mm * 4, w, mm % 50 ? 1.5 : 3); }
+    g.strokeStyle = 'rgba(240,250,240,.6)'; g.lineWidth = 2; g.beginPath(); g.moveTo(0, h); g.lineTo(h, 0); g.stroke();   // linha 45°
+    g.fillStyle = 'rgba(240,250,240,.8)'; g.font = '600 26px Nunito, sans-serif';
+    for (let mm = 50; mm < 300; mm += 50) g.fillText(String(mm / 10), mm * 4 + 6, 30);
+  });
+}
+function construirAtelie() {
+  if (atelie) { cena.remove(atelie); atelie = null; }
+  if (!medidas) return;
+  const { esc, tam } = medidas, mm = v => v * esc;               // 1 mm em unidades da cena
+  const g = new THREE.Group(); atelie = g;
+  const larg = Math.max(tam.x, tam.z), base = Math.max(larg * 3.2, 600);   // tamanho da mesa em mm
+  // mesa
+  const tm = texMadeira().clone(); tm.needsUpdate = true; tm.repeat.set(base * 2.5 / 600, base * 2 / 600);
+  const mesa = new THREE.Mesh(new THREE.PlaneGeometry(mm(base * 2.5), mm(base * 2)), new THREE.MeshStandardMaterial({ map: tm, roughness: 0.62 }));
+  mesa.rotation.x = -Math.PI / 2; mesa.position.y = -mm(0.2); mesa.receiveShadow = true; g.add(mesa);
+  // parede + painel perfurado
+  const fundoZ = -mm(Math.max(tam.z / 2 + 120, larg * 0.9));
+  const tp = texParede().clone(); tp.needsUpdate = true; tp.repeat.set(base * 3 / 400, base * 1.5 / 400);
+  const parede = new THREE.Mesh(new THREE.PlaneGeometry(mm(base * 3), mm(base * 1.5)), new THREE.MeshStandardMaterial({ map: tp, roughness: 0.95 }));
+  parede.position.set(0, mm(base * 0.75), fundoZ); parede.receiveShadow = true; g.add(parede);
+  const pl = Math.max(larg * 1.4, 380), ph = pl * 0.55;
+  const tpn = texPainel().clone(); tpn.needsUpdate = true; tpn.repeat.set(pl / 160, ph / 160);
+  const painel = new THREE.Mesh(new THREE.BoxGeometry(mm(pl), mm(ph), mm(6)), new THREE.MeshStandardMaterial({ map: tpn, roughness: 0.8 }));
+  painel.position.set(-mm(larg * 0.15), mm(Math.max(tam.y, 60) + ph / 2 + 40), fundoZ + mm(4)); painel.castShadow = painel.receiveShadow = true; g.add(painel);
+  // base de corte (300 × 220 mm): sob a peça se ela couber, senão ao lado
+  const cabe = tam.x < 260 && tam.z < 190;
+  const baseC = new THREE.Mesh(new THREE.BoxGeometry(mm(300), mm(2), mm(220)), [0,0,new THREE.MeshStandardMaterial({ map: texBaseCorte(), roughness: 0.75 }),0,0,0].map(m => m || new THREE.MeshStandardMaterial({ color: '#2E6A52', roughness: 0.75 })));
+  if (cabe) baseC.position.set(mm(20), -mm(1.1), mm(10)); else baseC.position.set(-mm(tam.x / 2 + 170), mm(1), mm(tam.z * 0.15));
+  baseC.rotation.y = cabe ? -0.08 : 0.25; baseC.receiveShadow = true; g.add(baseC);
+  if (cabe) grupo.position.y = mm(2);                            // a peça fica sobre a base
+  else grupo.position.y = 0;
+  // carretéis de linha (atrás, à esquerda)
+  const coresLinha = ['#E5458C', '#F2C230', '#5AA9E6', '#F2F0EB'];
+  coresLinha.forEach((cor, i) => {
+    const r = 14, h = 38, x = -(tam.x / 2 + 40 + i * 34), z = -(tam.z / 2 + 30) + (i % 2) * 22;
+    const car = new THREE.Group();
+    const madeira = new THREE.MeshStandardMaterial({ color: '#E6C79C', roughness: 0.7 });
+    const topo = new THREE.Mesh(new THREE.CylinderGeometry(mm(r + 3), mm(r + 3), mm(3), 32), madeira);
+    const fundo = topo.clone(); topo.position.y = mm(h - 1.5); fundo.position.y = mm(1.5);
+    const linha = new THREE.Mesh(new THREE.CylinderGeometry(mm(r), mm(r), mm(h - 6), 48), new THREE.MeshPhysicalMaterial({ color: cor, roughness: 0.55, sheen: 1, sheenColor: new THREE.Color(cor) }));
+    linha.position.y = mm(h / 2);
+    [topo, fundo, linha].forEach(m => { m.castShadow = m.receiveShadow = true; car.add(m); });
+    car.position.set(mm(x), 0, mm(z)); g.add(car);
+  });
+  // pilha de tecidos dobrados (atrás, à direita)
+  ['#F4B6C9', '#B5E3C4', '#F2F0EB', '#C9B3E6'].forEach((cor, i) => {
+    const t = new THREE.Mesh(new THREE.BoxGeometry(mm(130), mm(14), mm(90)), new THREE.MeshStandardMaterial({ color: cor, roughness: 0.95 }));
+    t.position.set(mm(tam.x / 2 + 110) + mm((i % 2) * 4), mm(7 + i * 14.5), -mm(tam.z / 2 + 40)); t.rotation.y = 0.18 + i * 0.05;
+    t.castShadow = t.receiveShadow = true; g.add(t);
+  });
+  cena.add(g);
+  // luz quente de "janela" com sombra
+  luz.castShadow = true; luz.color.set('#FFF1E0'); luz.intensity = 2.6; hemi.intensity = 0.15; renderer.toneMappingExposure = 0.95;
+  luz.shadow.radius = 4;
+  luz.position.set(mm(-base * 0.3), mm(base * 0.55), mm(base * 0.45)); luz.target.position.set(0, 0, 0); cena.add(luz.target);
+  const sc = luz.shadow.camera, ext = mm(base * 0.4); sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext; sc.near = mm(10); sc.far = mm(base * 1.5); sc.updateProjectionMatrix();
+  sombra.visible = false;
+}
+function desligarAtelie() {
+  if (atelie) { cena.remove(atelie); atelie = null; }
+  if (grupo) grupo.position.y = 0;
+  luz.castShadow = false; luz.color.set('#ffffff'); luz.intensity = 1.3; luz.position.set(3, 5, 2); hemi.intensity = 0.45; renderer.toneMappingExposure = 1;
+  sombra.visible = true;
+}
+function alternarAtelie(lig) {
+  atelieLigado = lig; $('btnAtelie').setAttribute('aria-pressed', lig);
+  document.body.classList.toggle('atelie', lig);
+  lig ? construirAtelie() : desligarAtelie();
+  // no ateliê a câmera fica do lado da frente (atrás tem a parede) e para de girar sozinha
+  controles.minAzimuthAngle = lig ? -1.1 : -Infinity; controles.maxAzimuthAngle = lig ? 1.25 : Infinity;
+  controles.autoRotate = !lig && $('btnGirar').getAttribute('aria-pressed') !== 'false';
+  enquadrar(); if (nomeAtual) aplicarNome(nomeAtual);
+}
+$('btnAtelie').onclick = () => alternarAtelie(!atelieLigado);
+if (atelieLigado) { $('btnAtelie').setAttribute('aria-pressed', true); document.body.classList.add('atelie'); controles.minAzimuthAngle = -1.1; controles.maxAzimuthAngle = 1.25; controles.autoRotate = false; }
 
 /* ---------- nome personalizado aplicado na peça ---------- */
 let nomeAtual = '', decal = null;
@@ -645,6 +772,7 @@ function modoLoja() {
   enquadrar();
 }
 if (params.get('modo') === 'loja') modoLoja();
+if (params.get('foto')) document.body.classList.add('foto');
 window.addEventListener('message', e => {
   if (!e.data) return;
   if (e.data.nika3d === 'modo' && e.data.modo === 'loja') modoLoja();

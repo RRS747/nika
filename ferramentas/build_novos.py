@@ -22,5 +22,7 @@ it=p.parse('porta canetinhas 80 un')
 V,F=first(it,'丙烯马克笔架2.0-80色')
 import trimesh
 R=trimesh.transformations.rotation_matrix(np.radians(-90),[0,1,0])[:3,:3]   # impresso deitado → em pé (foto do designer)
-V=(R@V.T).T; V=V-V.min(0)
-export('porta-canetinhas-80',[('Peca__x',center_xy(V),F)])                  # camadas: eixo X impresso virou horizontal
+V=(R@V.T).T
+R2=trimesh.transformations.rotation_matrix(np.radians(-90),[0,0,1])[:3,:3]  # furos de frente para a câmera
+V=(R2@V.T).T; V=V-V.min(0)
+export('porta-canetinhas-80',[('Peca__f',center_xy(V),F)])                  # camadas: eixo de impressão ficou na direção frente/trás
