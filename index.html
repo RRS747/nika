@@ -174,6 +174,10 @@ const CONFIG = {
     { id: "suporte-3-prateleiras", personalizar: { origem: [0.5, 1.6, 0.2], dir: [0, -1, 0], largura: 0.5 }, nome: "Suporte 3 Prateleiras", arquivo: "modelos/suporte-3-prateleiras.glb",
       sub: "Expositor em arco com 3 níveis — organizador de mesa moderno.",
       zonas: { Laterais: ["Laterais", "velvet:Preto"], Prateleiras: ["Prateleiras", "premium:Branco Dental"] } },
+    { id: "porta-bobinas", camera: [1.1, 2.3, 2.5], personalizar: { tipo: "circulo", origem: [0.5, 1.6, 0.8], dir: [0, -1, 0], largura: 0.97, textoPadrao: "Bobinas" },
+      nome: "Porta Bobinas", arquivo: "modelos/porta-bobinas.glb",
+      sub: "Pote com tampa de rosca para guardar bobinas — com nome em arco na base.",
+      zonas: { Peca: ["Peça", "premium:Branco Dental"] } },
     { id: "porta-canetinhas-80", personalizar: { origem: [0.5, 0.45, 1.6], dir: [0, 0, -1], largura: 0.55 }, nome: "Porta Canetinhas 80", arquivo: "modelos/porta-canetinhas-80.glb",
       sub: "Suporte inclinado para 80 canetinhas/marcadores.",
       zonas: { Peca: ["Peça", "velvet:Lilás Macaron"] } },
@@ -477,8 +481,9 @@ function montar(raiz, p) {
   });
   selZona(nomes[0]);
   if (variacaoPendente) { const v = variacaoPendente; variacaoPendente = null; aplicarVariacoes(v); }
-  $('blocoNome').style.display = p.personalizar && params.get('nome') ? '' : 'none';   // campo de nome só com ?nome=sim
-  if (nomeAtual) aplicarNome(nomeAtual);
+  $('blocoNome').style.display = p.personalizar && (params.get('nome') || p.personalizar.textoPadrao) ? '' : 'none';
+  if (p.personalizar?.textoPadrao) $('nomeInput').placeholder = 'Ex.: ' + p.personalizar.textoPadrao;   // campo de nome só com ?nome=sim
+  aplicarNome(nomeAtual);
   if (parent !== window) parent.postMessage({ nika3dPronto: true, personalizar: !!p.personalizar }, '*');
 }
 
@@ -491,7 +496,8 @@ function enquadrar() {
   const dist = raio / Math.sin(fov / 2) / ajuste * (atelieLigado ? (document.body.classList.contains('foto') ? 1.3 : 1.55) : 1.12);
   controles.target.copy(centro);
   if (atelieLigado) controles.target.y = centro.y * 0.8;
-  camera.position.copy(centro).add((atelieLigado ? new THREE.Vector3(1.5, 1.05, 3.1) : new THREE.Vector3(2.3, 1.6, 3.1)).normalize().multiplyScalar(dist));
+  const dirCam = produto?.camera ? new THREE.Vector3(...produto.camera) : (atelieLigado ? new THREE.Vector3(1.5, 1.05, 3.1) : new THREE.Vector3(2.3, 1.6, 3.1));
+  camera.position.copy(centro).add(dirCam.normalize().multiplyScalar(dist));
   controles.update();
 }
 
@@ -532,7 +538,7 @@ function atualizarResumo() {
     `<div class="lin"><span class="pt" style="background:${z.cor.multi ? 'conic-gradient(' + z.cor.multi.join(',') + ')' : z.cor.hex}"></span><b>${z.rotulo}</b>${z.cor.nome} <span style="color:var(--nk-suave)">· ${CONFIG.acabamentos[z.cor.acab].rotulo}</span></div>`).join('');
   $('resumo').innerHTML = linhas + '<small>Ao comprar, informe essas cores na variação ou no campo de observações do pedido.</small>';
   const varias = Object.keys(zonas).length > 1;
-  setTimeout(() => nomeAtual && aplicarNome(nomeAtual), 0);
+  setTimeout(() => aplicarNome(nomeAtual), 0);
   $('tag').innerHTML = Object.values(zonas).map(z => `<span><i style="background:${z.cor.multi ? 'conic-gradient(' + z.cor.multi.join(',') + ')' : z.cor.hex}"></i>${varias ? z.rotulo + ': ' : ''}${z.cor.nome}${sem(z.cor.nome).includes(sem(CONFIG.acabamentos[z.cor.acab].rotulo)) ? '' : ' · ' + CONFIG.acabamentos[z.cor.acab].rotulo}</span>`).join('');
   avisarAltura();
 }
@@ -647,13 +653,13 @@ function alternarAtelie(lig) {
   // no ateliê a câmera fica do lado da frente (atrás tem a parede) e para de girar sozinha
   controles.minAzimuthAngle = lig ? -1.1 : -Infinity; controles.maxAzimuthAngle = lig ? 1.25 : Infinity;
   controles.autoRotate = !lig && $('btnGirar').getAttribute('aria-pressed') !== 'false';
-  enquadrar(); if (nomeAtual) aplicarNome(nomeAtual);
+  enquadrar(); aplicarNome(nomeAtual);
 }
 $('btnAtelie').onclick = () => alternarAtelie(!atelieLigado);
 if (atelieLigado) { $('btnAtelie').setAttribute('aria-pressed', true); document.body.classList.add('atelie'); controles.minAzimuthAngle = -1.1; controles.maxAzimuthAngle = 1.25; controles.autoRotate = false; }
 
 /* ---------- nome personalizado aplicado na peça ---------- */
-let nomeAtual = '', decal = null;
+let nomeAtual = '', decal = null, corTextoEscolhida = null;
 const raio = new THREE.Raycaster();
 function texturaNome(texto, cor) {
   const c = document.createElement('canvas'), g = c.getContext('2d');
@@ -666,6 +672,32 @@ function texturaNome(texto, cor) {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
   return { t, aspecto: c.height / c.width };
 }
+function texturaCirculo(texto, cor) {
+  // texto em arco (em cima e repetido embaixo, girado), com anel na borda — como nas bobineiras personalizadas
+  const W = 1024, c = document.createElement('canvas'); c.width = c.height = W;
+  const g = c.getContext('2d'), cx = W / 2, cy = W / 2;
+  g.translate(W, 0); g.scale(-1, 1);                              // o decalque projeta espelhado
+  g.strokeStyle = cor; g.fillStyle = cor;
+  g.lineWidth = 14; g.beginPath(); g.arc(cx, cy, W * 0.47, 0, Math.PI * 2); g.stroke();
+  const rTexto = W * 0.375, n = texto.length;
+  let tam = 150; g.font = `700 ${tam}px 'Fredoka', 'Nunito', sans-serif`;
+  const arcoMax = Math.PI * 0.74;                                  // cada texto ocupa no máx. ~150° do círculo
+  while (g.measureText(texto).width / rTexto > arcoMax && tam > 40) { tam -= 4; g.font = `700 ${tam}px 'Fredoka', 'Nunito', sans-serif`; }
+  const larguras = [...texto].map(ch => g.measureText(ch).width), total = larguras.reduce((a, b) => a + b, 0) * 1.06;
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  for (const lado of [0, 1]) {
+    g.save(); g.translate(cx, cy); if (lado) g.rotate(Math.PI);
+    let a = -Math.PI / 2 - (total / rTexto) / 2;
+    [...texto].forEach((ch, i) => {
+      const da = larguras[i] * 1.06 / rTexto; a += da / 2;
+      g.save(); g.rotate(a + Math.PI / 2); g.fillText(ch, 0, -rTexto); g.restore();
+      a += da / 2;
+    });
+    g.restore();
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  return { t, aspecto: 1 };
+}
 function corContraste(hex) {
   const c = new THREE.Color(hex), l = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;   // linear
   return l > 0.35 ? '#3A2733' : '#FFFFFF';
@@ -673,8 +705,10 @@ function corContraste(hex) {
 function aplicarNome(texto) {
   nomeAtual = (texto || '').trim().slice(0, 20);
   if (decal) { cena.remove(decal); decal.geometry.dispose(); decal.material.map?.dispose(); decal.material.dispose(); decal = null; }
-  if (!nomeAtual || !grupo || !produto?.personalizar) return;
-  const cfg = produto.personalizar; if (!cfg) return;
+  if (!grupo || !produto?.personalizar) return;
+  const cfg = produto.personalizar;
+  const textoFinal = nomeAtual || cfg.textoPadrao || '';
+  if (!textoFinal) return;
   grupo.updateMatrixWorld(true);
   const caixa = new THREE.Box3().setFromObject(grupo), tam = caixa.getSize(new THREE.Vector3());
   const origem = new THREE.Vector3(...cfg.origem).multiply(tam).add(caixa.min);
@@ -684,13 +718,18 @@ function aplicarNome(texto) {
   const hit = raio.intersectObjects(malhas, false)[0];
   if (!hit) return;
   const normal = hit.face.normal.clone().transformDirection(hit.object.matrixWorld).normalize();
+  if (cfg.tipo === 'circulo') {                 // acha a superfície fora do furo e centraliza o texto no disco
+    const centro = caixa.getCenter(new THREE.Vector3());
+    hit.point.x = centro.x; hit.point.z = centro.z;
+  }
   const vertical = Math.abs(normal.y) > 0.8;
   const up = vertical ? new THREE.Vector3(0, 0, -1) : new THREE.Vector3(0, 1, 0);
   const m = new THREE.Matrix4().lookAt(hit.point, hit.point.clone().add(normal), up);
   const ori = new THREE.Euler().setFromRotationMatrix(m);
   const larg = cfg.largura * Math.max(vertical ? tam.x : (Math.abs(normal.x) > 0.5 ? tam.z : tam.x), 0.01);
   const zona = zonas[hit.object.userData.zona];
-  const { t, aspecto } = texturaNome(nomeAtual, corContraste(zona?.cor.hex || '#ffffff'));
+  const corTexto = corTextoEscolhida || corContraste(zona?.cor.hex || '#ffffff');
+  const { t, aspecto } = cfg.tipo === 'circulo' ? texturaCirculo(textoFinal, corTexto) : texturaNome(textoFinal, corTexto);
   const geo = new DecalGeometry(hit.object, hit.point, ori, new THREE.Vector3(larg, larg * aspecto, larg * 0.6));
   const mat = new THREE.MeshPhysicalMaterial({ map: t, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4,
     roughness: 0.35, clearcoat: 0.4, metalness: 0 });
@@ -751,6 +790,10 @@ function aplicarVariacoes(opcoes) {
   if (!Object.keys(zonas).length) { variacaoPendente = opcoes; return; }
   let ultima = null;
   for (const { grupo, valor, hex } of opcoes) {
+    if (/\b(texto|nome|letra|letras)\b/.test(sem(grupo))) {        // grupo "Cor do Texto": pinta só o nome
+      const c = corDoTexto(valor); corTextoEscolhida = c ? c.hex : (hex || null);
+      continue;
+    }
     // cor da paleta (pelo nome) e/ou a cor exata cadastrada na variação da loja (hex)
     const daPaleta = corDoTexto(valor);
     const linha = Object.keys(LINHA_PALAVRAS).find(k => LINHA_PALAVRAS[k].some(p => contem(sem(valor), p)));

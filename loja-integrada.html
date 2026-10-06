@@ -13,13 +13,15 @@
   PASSO 2 — EM CADA PRODUTO 3D: descrição do produto (modo HTML / código-fonte)
   O script do passo 1 leva o modelo para o lugar da foto do produto.
   Troque o ?produto=... pela peça da página:
-    caixa-agulhas | suporte-4-prateleiras | suporte-3-prateleiras | fita-metrica | bobinas | porta-canetinhas-80
+    caixa-agulhas | suporte-4-prateleiras | suporte-3-prateleiras | fita-metrica | bobinas | porta-canetinhas-80 | porta-bobinas
   (para deixar o simulador completo na descrição, acrescente data-posicao="descricao" na div)
   PEÇA COM NOME (opcional): por padrão a peça NÃO tem nome. Para ativar numa peça, acrescente na div:
     data-nome="sim"          → mostra o campo "Nome para personalizar" (opcional para o cliente)
     data-nome="obrigatorio"  → mostra o campo e exige o nome antes de comprar
   Ex.: <div class="nika3d" data-nome="sim"><iframe ...></iframe></div>
   (Bobinas não aceitam nome — o disco é pequeno demais.)
+  Porta Bobinas: nome em arco na base (repete em cima e embaixo, com anel). Sem nome digitado mostra "Bobinas".
+  Cor do texto: crie um grupo de variação "Cor do Texto" (ex.: "Vermelho Premium"); sem ele, a cor contrasta sozinha.
   =====================================================================
 -->
 <div class="nika3d"><iframe src="https://rrs747.github.io/nika/?produto=bobinas" title="Simulador 3D" scrolling="no" style="width:100%;aspect-ratio:1/1;border:0"></iframe></div>
@@ -54,5 +56,6 @@
       Porta Canetinhas 80 ...... só "Cor" (peça de uma cor)
       Porta Fita Métrica ....... só "Cor" (peça de uma cor)
       Bobinas .................. só "Cor" (peça de uma cor)
+      Porta Bobinas ............ "Cor" + opcional "Cor do Texto"
   =====================================================================
 -->

@@ -14,6 +14,7 @@ Visualizador 3D das peças impressas da [Nikateliê](https://www.nikatelie.com.b
 | `bobinas`               | Bobinas                 | uma cor só               |
 | `suporte-3-prateleiras` | Suporte 3 Prateleiras   | Laterais, Prateleiras    |
 | `porta-canetinhas-80`   | Porta Canetinhas 80     | uma cor só               |
+| `porta-bobinas`         | Porta Bobinas           | peça + cor do texto (nome em arco na base) |
 
 ## Como usar na Loja Integrada
 
